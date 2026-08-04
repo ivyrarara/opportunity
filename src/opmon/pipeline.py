@@ -9,6 +9,7 @@ main()은 env로 실제 Firestore/Telegram을 구성한다.
 
 from __future__ import annotations
 
+import os
 import time
 from dataclasses import dataclass, field
 from typing import Callable
@@ -123,6 +124,26 @@ def _build_real(cfg: TargetsConfig):
     return posting_store, state_store, error_store, notifier, ctx
 
 
+def _build_local(cfg: TargetsConfig, data_dir: str):
+    """로컬 JSON 파일 저장소 + Telegram (Firebase 없이 개인용 실행)."""
+    import httpx
+
+    from .http_client import RateLimiter
+    from .notify.telegram import TelegramNotifier
+    from .storage.file import (
+        JsonFileCrawlErrorStore,
+        JsonFilePostingStore,
+        JsonFileStateStore,
+    )
+
+    posting_store = JsonFilePostingStore(data_dir)
+    state_store = JsonFileStateStore(data_dir)
+    error_store = JsonFileCrawlErrorStore(data_dir)
+    notifier = TelegramNotifier.from_env()
+    ctx = RunContext(rate_limiter=RateLimiter(), client=httpx.Client(follow_redirects=True, timeout=15.0))
+    return posting_store, state_store, error_store, notifier, ctx
+
+
 def _build_dry():
     """인메모리 구성 (드라이런). 알림·저장은 수집만."""
     from .http_client import RateLimiter
@@ -146,11 +167,22 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--seed", action="store_true", help="시드 모드: 공고 알림 억제, DB만 채움(§10-7)")
     ap.add_argument("--dry-run", action="store_true", help="인메모리(저장·전송 안 함)")
     ap.add_argument("--only", nargs="*", help="특정 company id만 실행")
+    ap.add_argument(
+        "--store", choices=["firestore", "file"],
+        default=os.getenv("OPMON_STORE", "firestore"),
+        help="중복제거 저장소. file=로컬 JSON(Firebase 불필요), firestore=배포용(기본)",
+    )
+    ap.add_argument(
+        "--data-dir", default=os.getenv("OPMON_DATA_DIR", "./opmon_data"),
+        help="--store file일 때 상태 파일 디렉터리 (기본 ./opmon_data)",
+    )
     args = ap.parse_args(argv)
 
     cfg = load_targets()
     if args.dry_run:
         posting_store, state_store, error_store, notifier, ctx = _build_dry()
+    elif args.store == "file":
+        posting_store, state_store, error_store, notifier, ctx = _build_local(cfg, args.data_dir)
     else:
         posting_store, state_store, error_store, notifier, ctx = _build_real(cfg)
 

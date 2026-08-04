@@ -44,6 +44,29 @@ python -m opmon.adapters.jobkorea --company nhn --probe
 접근 사다리(requests 200? → 헤더보강 → 채용관 직행 → Playwright) 중 **어디서 통과되는지**가
 나머지 잡코리아 15곳 설계를 결정한다. 통과 HTML은 fixture로 박제해 회귀 테스트에 반영.
 
+## 3-bis. 로컬 실행 (Firebase 없이) — 개인용 가장 간단한 경로
+
+Firestore 대신 로컬 JSON 파일에 상태를 두면 개인 컴퓨터/서버에서 그대로 돌아간다.
+(GitHub Actions처럼 파일시스템이 휘발되는 곳에서는 Firestore를 쓰거나 상태를 커밋백해야 함.)
+
+```bash
+export OPMON_TELEGRAM_TOKEN=<botfather-token>
+export OPMON_TELEGRAM_CHAT_ID=<chat-id>
+
+# 봇 발신 확인
+python -m opmon.notify.telegram "연결 테스트"
+
+# 시드 1회(알림 억제, 파일에 현재 공고 채움)
+python -m opmon.pipeline --store file --seed
+
+# 이후 정상 실행 — 신규 공고를 텔레그램으로
+python -m opmon.pipeline --store file
+```
+
+상태는 `./opmon_data/`(또는 `--data-dir PATH`)에 저장된다:
+`postings.json`(중복제거), `state.json`(위장탐지 이력), `crawl_errors.jsonl`(감사).
+`OPMON_STORE=file`, `OPMON_DATA_DIR=...` 환경변수로도 지정 가능.
+
 ## 4. 시드 실행 (§2-2, §10-7) — 최초 1회, 알림 없이 DB만
 
 ```bash

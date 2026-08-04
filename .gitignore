@@ -26,3 +26,7 @@ credentials*.json
 # Probe/fixture 임시 산출물 (§6-4)
 probe.html
 scratch/
+
+# 로컬 파일 저장소 데이터 (개인용 실행 상태)
+opmon_data/
+*.jsonl
