@@ -19,7 +19,7 @@ NHN = CFG.get_company("nhn")
 
 def test_build_search_url_uses_brand_filter():
     url = jobkorea.build_search_url(NHN)
-    assert "m.jobkorea.co.kr" in url
+    assert "www.jobkorea.co.kr" in url  # 데스크탑 www가 실제 검색됨(모바일 m은 검색어 무시)
     assert "stext=" in url
     # 엔에이치엔 URL 인코딩 포함
     assert "%" in url.split("stext=")[1]

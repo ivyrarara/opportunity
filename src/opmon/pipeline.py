@@ -160,8 +160,21 @@ def _build_dry():
     )
 
 
+def _make_stdout_utf8_safe() -> None:
+    """윈도우 기본 콘솔(cp949)에서 이모지·—(em-dash) 등이 크래시하지 않도록 utf-8로."""
+    import sys
+
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]
+        except Exception:
+            pass
+
+
 def main(argv: list[str] | None = None) -> int:
     import argparse
+
+    _make_stdout_utf8_safe()
 
     ap = argparse.ArgumentParser(description="기회 모니터링 1회 실행 (§10-2)")
     ap.add_argument("--seed", action="store_true", help="시드 모드: 공고 알림 억제, DB만 채움(§10-7)")

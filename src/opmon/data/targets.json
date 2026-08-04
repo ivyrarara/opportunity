@@ -4,7 +4,7 @@
       "id": "nhn",
       "name": "NHN",
       "adapter": "jobkorea",
-      "urls": ["https://m.jobkorea.co.kr"],
+      "urls": ["https://www.jobkorea.co.kr"],
       "brand_filter": "엔에이치엔",
       "fingerprint": "JOBKOREA_M_FINGERPRINT",
       "notes": "최우선 검증 대상. 잡코리아 모바일, 가장 먼저 실제 응답 검증 대상"
@@ -13,7 +13,7 @@
       "id": "sk_elecklink",
       "name": "SK일렉링크",
       "adapter": "jobkorea",
-      "urls": ["https://m.jobkorea.co.kr"],
+      "urls": ["https://www.jobkorea.co.kr"],
       "brand_filter": "에스케이일렉링크",
       "fingerprint": "JOBKOREA_M_FINGERPRINT"
     },
@@ -21,7 +21,7 @@
       "id": "loreal",
       "name": "로레알코리아",
       "adapter": "jobkorea",
-      "urls": ["https://m.jobkorea.co.kr"],
+      "urls": ["https://www.jobkorea.co.kr"],
       "brand_filter": "로레알",
       "fingerprint": "JOBKOREA_M_FINGERPRINT",
       "notes": "시니어는 글로벌 사이트에만 있을 수 있음"
@@ -30,7 +30,7 @@
       "id": "mercedes_benz_korea",
       "name": "메르세데스벤츠코리아",
       "adapter": "jobkorea",
-      "urls": ["https://m.jobkorea.co.kr"],
+      "urls": ["https://www.jobkorea.co.kr"],
       "brand_filter": "메르세데스벤츠코리아",
       "fingerprint": "JOBKOREA_M_FINGERPRINT",
       "notes": "외국계, 공고 적음"
@@ -39,7 +39,7 @@
       "id": "ea_korea",
       "name": "일렉트로닉아츠코리아",
       "adapter": "jobkorea",
-      "urls": ["https://m.jobkorea.co.kr"],
+      "urls": ["https://www.jobkorea.co.kr"],
       "brand_filter": "일렉트로닉아츠",
       "fingerprint": "JOBKOREA_M_FINGERPRINT",
       "notes": "국내 볼륨 적음"
@@ -48,7 +48,7 @@
       "id": "gsk_korea",
       "name": "글락소스미스클라인",
       "adapter": "jobkorea",
-      "urls": ["https://m.jobkorea.co.kr"],
+      "urls": ["https://www.jobkorea.co.kr"],
       "brand_filter": "글락소스미스클라인",
       "fingerprint": "JOBKOREA_M_FINGERPRINT",
       "notes": "매칭 낮음"
@@ -57,7 +57,7 @@
       "id": "applied_materials_korea",
       "name": "어플라이드머티어리얼즈코리아",
       "adapter": "jobkorea",
-      "urls": ["https://m.jobkorea.co.kr"],
+      "urls": ["https://www.jobkorea.co.kr"],
       "brand_filter": "어플라이드머티어리얼즈",
       "fingerprint": "JOBKOREA_M_FINGERPRINT",
       "notes": "엔지니어링 위주"
@@ -66,7 +66,7 @@
       "id": "herbalife_korea",
       "name": "한국허벌라이프",
       "adapter": "jobkorea",
-      "urls": ["https://m.jobkorea.co.kr"],
+      "urls": ["https://www.jobkorea.co.kr"],
       "brand_filter": "한국허벌라이프",
       "fingerprint": "JOBKOREA_M_FINGERPRINT",
       "notes": "매칭 낮음(요청대로 포함)"
@@ -75,7 +75,7 @@
       "id": "tossbank",
       "name": "토스뱅크",
       "adapter": "jobkorea",
-      "urls": ["https://m.jobkorea.co.kr"],
+      "urls": ["https://www.jobkorea.co.kr"],
       "brand_filter": "토스뱅크",
       "fingerprint": "JOBKOREA_M_FINGERPRINT",
       "notes": "자체 사이트 확인 시 spa 전환"
@@ -84,7 +84,7 @@
       "id": "hanmi_pharm",
       "name": "한미약품",
       "adapter": "jobkorea",
-      "urls": ["https://m.jobkorea.co.kr"],
+      "urls": ["https://www.jobkorea.co.kr"],
       "brand_filter": "한미약품",
       "fingerprint": "JOBKOREA_M_FINGERPRINT"
     },
@@ -92,7 +92,7 @@
       "id": "pfizer_korea",
       "name": "한국화이자제약",
       "adapter": "jobkorea",
-      "urls": ["https://m.jobkorea.co.kr"],
+      "urls": ["https://www.jobkorea.co.kr"],
       "brand_filter": "한국화이자제약",
       "fingerprint": "JOBKOREA_M_FINGERPRINT",
       "notes": "매칭 낮음"
@@ -101,7 +101,7 @@
       "id": "hybe",
       "name": "하이브",
       "adapter": "jobkorea",
-      "urls": ["https://m.jobkorea.co.kr"],
+      "urls": ["https://www.jobkorea.co.kr"],
       "brand_filter": "하이브",
       "fingerprint": "JOBKOREA_M_FINGERPRINT",
       "notes": "브랜딩/BX 상대적으로 많음"
@@ -110,7 +110,7 @@
       "id": "cj_enm",
       "name": "CJ ENM",
       "adapter": "jobkorea",
-      "urls": ["https://m.jobkorea.co.kr"],
+      "urls": ["https://www.jobkorea.co.kr"],
       "brand_filter": "씨제이이엔엠",
       "fingerprint": "JOBKOREA_M_FINGERPRINT",
       "notes": "company.cjenm.com 있으면 전환 검토"
@@ -119,7 +119,7 @@
       "id": "incheon_airport",
       "name": "인천국제공항공사",
       "adapter": "jobkorea",
-      "urls": ["https://m.jobkorea.co.kr"],
+      "urls": ["https://www.jobkorea.co.kr"],
       "brand_filter": "인천국제공항공사",
       "fingerprint": "JOBKOREA_M_FINGERPRINT",
       "notes": "공기업 → 나라일터 병행 검토"
@@ -128,7 +128,7 @@
       "id": "korea_tourism_org",
       "name": "한국관광공사",
       "adapter": "jobkorea",
-      "urls": ["https://m.jobkorea.co.kr"],
+      "urls": ["https://www.jobkorea.co.kr"],
       "brand_filter": "한국관광공사",
       "fingerprint": "JOBKOREA_M_FINGERPRINT",
       "notes": "공기업 → 나라일터 병행 검토"
@@ -137,7 +137,7 @@
       "id": "khfc",
       "name": "한국주택금융공사",
       "adapter": "jobkorea",
-      "urls": ["https://m.jobkorea.co.kr"],
+      "urls": ["https://www.jobkorea.co.kr"],
       "brand_filter": "한국주택금융공사",
       "fingerprint": "JOBKOREA_M_FINGERPRINT",
       "notes": "공기업, 행정직 위주"
