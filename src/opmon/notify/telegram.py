@@ -63,3 +63,28 @@ class TelegramNotifier(Notifier):
     def close(self) -> None:
         if self._own_client:
             self._client.close()
+
+
+def _main(argv: list[str]) -> int:
+    """봇 연결 확인용 테스트 전송.
+
+    사용:  OPMON_TELEGRAM_TOKEN=... OPMON_TELEGRAM_CHAT_ID=... \
+           python -m opmon.notify.telegram ["보낼 메시지"]
+    """
+    text = argv[0] if argv else "✅ opmon 텔레그램 연결 테스트"
+    try:
+        tg = TelegramNotifier.from_env()
+    except ValueError as exc:
+        print(f"[FAIL] {exc}")
+        print("  OPMON_TELEGRAM_TOKEN, OPMON_TELEGRAM_CHAT_ID 환경변수를 설정하세요.")
+        return 2
+    ok = tg.send(text)
+    tg.close()
+    print("[OK] 전송 성공" if ok else "[FAIL] 전송 실패 (토큰/chat_id/네트워크 확인)")
+    return 0 if ok else 1
+
+
+if __name__ == "__main__":
+    import sys
+
+    raise SystemExit(_main(sys.argv[1:]))
