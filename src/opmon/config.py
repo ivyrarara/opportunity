@@ -9,15 +9,26 @@
 from __future__ import annotations
 
 import json
+import os
 from enum import Enum
 from functools import lru_cache
 from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
-# 레포 루트 기준 기본 설정 경로 (config/targets.json).
-_REPO_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_TARGETS_PATH = _REPO_ROOT / "config" / "targets.json"
+# 패키지에 동봉된 기본 설정 (설치본에서도 동작). 커스텀은 OPMON_TARGETS env 또는 인자로.
+_PACKAGED_TARGETS = Path(__file__).resolve().parent / "data" / "targets.json"
+
+
+def _default_targets_path() -> Path:
+    """기본 targets.json 경로 해석: env(OPMON_TARGETS) → 패키지 동봉본."""
+    env = os.getenv("OPMON_TARGETS")
+    if env:
+        return Path(env)
+    return _PACKAGED_TARGETS
+
+
+DEFAULT_TARGETS_PATH = _PACKAGED_TARGETS  # 하위호환 (직접 참조하는 코드용)
 
 
 class ConfigError(Exception):
@@ -150,7 +161,7 @@ def load_targets(path: str | Path | None = None) -> TargetsConfig:
 
     파일 부재 · JSON 파싱 오류 · 스키마 위반은 모두 ConfigError로 감싸 던진다.
     """
-    p = Path(path) if path is not None else DEFAULT_TARGETS_PATH
+    p = Path(path) if path is not None else _default_targets_path()
     try:
         raw = p.read_text(encoding="utf-8")
     except FileNotFoundError as exc:

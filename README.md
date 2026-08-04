@@ -6,7 +6,7 @@
 ## 구조
 
 ```
-config/targets.json   # 대상 회사 · 키워드 · 필터 설정 (코드와 분리)
+src/opmon/data/targets.json   # 대상 회사 · 키워드 · 필터 설정 (코드와 분리)
 src/opmon/config.py   # 설정 로더 + 스키마 검증
 tests/                # 테스트
 ```
@@ -27,7 +27,7 @@ pytest
 
 명세 §10 순서대로 한 단계씩 진행한다.
 
-- [x] 1. `config/targets.json` 로더 + 스키마 검증
+- [x] 1. `src/opmon/data/targets.json` 로더 + 스키마 검증
 - [~] 2. 잡코리아 NHN end-to-end 세로 검증 — **파싱·매칭·콘솔출력까지 오프라인 완료**.
       단, 이 세션은 egress 정책상 `m.jobkorea.co.kr` 접근이 차단되어 §6-4 라이브 probe 미완.
       fingerprint의 `[검증필요]` 셀렉터/마커는 network 되는 환경에서 probe 1회로 확정 필요.

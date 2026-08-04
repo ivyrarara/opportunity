@@ -17,7 +17,7 @@ from opmon.config import (
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_TARGETS = REPO_ROOT / "config" / "targets.json"
+DEFAULT_TARGETS = REPO_ROOT / "src" / "opmon" / "data" / "targets.json"
 
 
 def _minimal_config() -> dict:
