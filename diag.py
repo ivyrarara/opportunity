@@ -1,49 +1,61 @@
 # -*- coding: utf-8 -*-
-"""설치된 opmon으로 잡코리아 1개 회사를 실제 취득→분류→추출 진단.
+"""잡코리아: 어떤 헤더 조합이 '데스크탑(공고 담긴) 페이지'를 주는지 시험.
+
+httpx(파이프라인과 동일 transport)로 여러 헤더 조합 × 검색어를 시험해,
+'search/mobile'(모바일 앱) 대신 'CardJob'/'GI_Read'(데스크탑 SSR)가 오는 조합을 찾는다.
 
 실행:  python diag.py
 결과 전체를 복사해서 전달하세요.
 """
-import re
+import httpx
 
-from opmon.adapters.jobkorea import DEFAULT_BASE, build_search_url
-from opmon.classify import classify
-from opmon.config import load_targets
-from opmon.extract import extract_with_fingerprint
-from opmon.fingerprints import get_fingerprint
-from opmon.http_client import REAL_BROWSER_HEADERS, fetch
+URL = "https://www.jobkorea.co.kr/Search/?stext={q}"
 
-print("=" * 58)
-cfg = load_targets()
-c = cfg.get_company("nhn")
-url = build_search_url(c)
-print("회사:", c.id, "| 검색어:", c.brand_filter or c.name)
-print("URL:", url)
+UA_DESKTOP = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+              "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36")
 
-resp, exc = fetch(url, headers=REAL_BROWSER_HEADERS)
-print("예외:", repr(exc)[:200] if exc else "없음")
-if resp is not None:
-    body = resp.text
-    print("상태코드:", resp.status_code)
-    print("Content-Encoding:", resp.headers.get("content-encoding"))
-    print("Content-Type:", resp.headers.get("content-type"))
-    print("본문 길이:", len(body))
-    print("'총' 포함:", "총" in body, "| 'GI_Read' 포함:", "GI_Read" in body,
-          "| 'CardJob' 포함:", "CardJob" in body)
-    m = re.search(r"<title[^>]*>(.*?)</title>", body, re.S | re.I)
-    print("제목:", (m.group(1).strip()[:120] if m else "(없음)"))
+VARIANTS = {
+    "A_minimal(UA만)": {"User-Agent": UA_DESKTOP},
+    "B_probe식(UA+Accept+Lang+UIR)": {
+        "User-Agent": UA_DESKTOP,
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Upgrade-Insecure-Requests": "1",
+    },
+    "C_현재헤더(Sec-Fetch포함)": {
+        "User-Agent": UA_DESKTOP,
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Upgrade-Insecure-Requests": "1",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "same-origin",
+    },
+}
 
-    fp = get_fingerprint(c.fingerprint or "JOBKOREA_M_FINGERPRINT")
-    o, meta = classify(resp, exc, fp, base=DEFAULT_BASE)
-    print("\n>>> OUTCOME:", o)
-    print(">>> META:", {k: meta[k] for k in meta if k not in ()})
+QUERIES = [("NHN", "NHN"), ("한글(엔에이치엔)", "엔에이치엔")]
 
-    declared, items, ex = extract_with_fingerprint(body, fp, base=DEFAULT_BASE)
-    print(">>> declared:", declared, "| parsed:", len(items))
-    for p in items[:6]:
-        print("   -", p.job_id, "|", p.title[:60])
 
-    print("\n본문 앞 400자(원본):")
-    print(repr(body[:400]))
-print("=" * 58)
-print("진단 끝 — 위 전체를 복사해서 전달하세요.")
+def probe(name, headers, qlabel, q):
+    try:
+        with httpx.Client(follow_redirects=True, timeout=20.0) as cli:
+            r = cli.get(URL.format(q=q), headers=headers)
+        body = r.text
+        mobile = "search/mobile" in body
+        card = "CardJob" in body
+        gi = "GI_Read" in body
+        chong = "총" in body and "건" in body
+        verdict = "★데스크탑OK" if (card or gi) else ("모바일" if mobile else "??")
+        print(f"[{name} | {qlabel}] status={r.status_code} len={len(body)} "
+              f"mobile={mobile} CardJob={card} GI_Read={gi} 총건={chong} → {verdict}")
+    except Exception as e:
+        print(f"[{name} | {qlabel}] 실패: {type(e).__name__} {str(e)[:120]}")
+
+
+print("=" * 60)
+print("잡코리아 헤더 조합 시험 (httpx)")
+for name, headers in VARIANTS.items():
+    for qlabel, q in QUERIES:
+        probe(name, headers, qlabel, q)
+print("=" * 60)
+print("진단 끝 — 위 전체를 복사해서 전달하세요. '★데스크탑OK'가 뜨는 줄이 정답 조합입니다.")
