@@ -1,61 +1,64 @@
 # -*- coding: utf-8 -*-
-"""잡코리아: 어떤 헤더 조합이 '데스크탑(공고 담긴) 페이지'를 주는지 시험.
+"""파이프라인과 동일 경로(opmon fetch→classify→extract) 전체 진단.
 
-httpx(파이프라인과 동일 transport)로 여러 헤더 조합 × 검색어를 시험해,
-'search/mobile'(모바일 앱) 대신 'CardJob'/'GI_Read'(데스크탑 SSR)가 오는 조합을 찾는다.
-
-실행:  python diag.py
-결과 전체를 복사해서 전달하세요.
+실행:  python diag.py > out.txt 2>&1
+그다음:  notepad out.txt   → 전체 복사해서 전달.
 """
-import httpx
+import re
 
-URL = "https://www.jobkorea.co.kr/Search/?stext={q}"
+from bs4 import BeautifulSoup
 
-UA_DESKTOP = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-              "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36")
-
-VARIANTS = {
-    "A_minimal(UA만)": {"User-Agent": UA_DESKTOP},
-    "B_probe식(UA+Accept+Lang+UIR)": {
-        "User-Agent": UA_DESKTOP,
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
-        "Upgrade-Insecure-Requests": "1",
-    },
-    "C_현재헤더(Sec-Fetch포함)": {
-        "User-Agent": UA_DESKTOP,
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-        "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
-        "Upgrade-Insecure-Requests": "1",
-        "Sec-Fetch-Dest": "document",
-        "Sec-Fetch-Mode": "navigate",
-        "Sec-Fetch-Site": "same-origin",
-    },
-}
-
-QUERIES = [("NHN", "NHN"), ("한글(엔에이치엔)", "엔에이치엔")]
-
-
-def probe(name, headers, qlabel, q):
-    try:
-        with httpx.Client(follow_redirects=True, timeout=20.0) as cli:
-            r = cli.get(URL.format(q=q), headers=headers)
-        body = r.text
-        mobile = "search/mobile" in body
-        card = "CardJob" in body
-        gi = "GI_Read" in body
-        chong = "총" in body and "건" in body
-        verdict = "★데스크탑OK" if (card or gi) else ("모바일" if mobile else "??")
-        print(f"[{name} | {qlabel}] status={r.status_code} len={len(body)} "
-              f"mobile={mobile} CardJob={card} GI_Read={gi} 총건={chong} → {verdict}")
-    except Exception as e:
-        print(f"[{name} | {qlabel}] 실패: {type(e).__name__} {str(e)[:120]}")
-
+from opmon.adapters.jobkorea import DEFAULT_BASE, build_search_url
+from opmon.classify import classify
+from opmon.config import load_targets
+from opmon.extract import extract_with_fingerprint, parse_item
+from opmon.fingerprints import get_fingerprint
+from opmon.http_client import REAL_BROWSER_HEADERS, fetch
 
 print("=" * 60)
-print("잡코리아 헤더 조합 시험 (httpx)")
-for name, headers in VARIANTS.items():
-    for qlabel, q in QUERIES:
-        probe(name, headers, qlabel, q)
+cfg = load_targets()
+c = cfg.get_company("nhn")
+url = build_search_url(c)
+fp = get_fingerprint(c.fingerprint or "JOBKOREA_M_FINGERPRINT")
+print("회사:", c.id, "| 검색어:", c.brand_filter or c.name)
+print("URL:", url)
+
+resp, exc = fetch(url, headers=REAL_BROWSER_HEADERS)
+print("예외:", repr(exc)[:200] if exc else "없음")
+if resp is None:
+    raise SystemExit("resp 없음")
+
+body = resp.text
+print("상태:", resp.status_code, "| 길이:", len(body),
+      "| Content-Encoding:", resp.headers.get("content-encoding"))
+print("CardJob:", "CardJob" in body, "| GI_Read:", "GI_Read" in body,
+      "| 'search/mobile':", "search/mobile" in body)
+m = re.search(r"<title[^>]*>(.*?)</title>", body, re.S | re.I)
+print("제목:", (m.group(1).strip()[:130] if m else "(없음)"))
+
+# 원시 셀렉터가 몇 개 잡는지 + parse_item 성공 수
+soup = BeautifulSoup(body, "html.parser")
+gi_anchors = soup.select('a[href*="/Recruit/GI_Read/"]')
+print("GI_Read 앵커 수(셀렉터):", len(gi_anchors))
+parsed_ok = 0
+sample_titles = []
+for a in gi_anchors[:40]:
+    p = parse_item(a, DEFAULT_BASE, fp)
+    if p is not None:
+        parsed_ok += 1
+        if len(sample_titles) < 6:
+            sample_titles.append((p.job_id, p.title[:50]))
+print("parse_item 성공 수(앞40개 중):", parsed_ok)
+for jid, t in sample_titles:
+    print("   -", jid, "|", t)
+
+o, meta = classify(resp, exc, fp, base=DEFAULT_BASE)
+print("\n>>> OUTCOME:", o)
+print(">>> META:", dict(meta))
+
+declared, items, ex = extract_with_fingerprint(body, fp, base=DEFAULT_BASE)
+print(">>> declared:", declared, "| parsed(dedup):", len(items))
+
+print("\n본문 앞 300자:", repr(body[:300]))
 print("=" * 60)
-print("진단 끝 — 위 전체를 복사해서 전달하세요. '★데스크탑OK'가 뜨는 줄이 정답 조합입니다.")
+print("진단 끝 — out.txt 전체를 복사해서 전달하세요.")
