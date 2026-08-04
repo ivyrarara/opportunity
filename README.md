@@ -42,6 +42,6 @@ pytest
       어댑터 레지스트리(미구현 어댑터 자동 스킵), GitHub Actions 크론(11:00 UTC≈07:00 Toronto).
       - 드라이런: `python -m opmon.pipeline --dry-run --only nhn`
       - 실행: `python -m opmon.pipeline [--seed] [--only ...]` (env 필요)
-- [ ] 7. 시드 모드 1회 전체 실행 → 정상 알림 모드
+- [x] 7. 시드 모드 — `--seed` 플래그·dispatch 억제 구현·테스트 완료. 실제 시드 실행 절차는 `DEPLOY.md` runbook
 - [ ] 8. SPA 그룹 (토스 검증 → 확장)
 - [ ] 9. 현대차 NetFunnel (맨 마지막·실패 허용)
