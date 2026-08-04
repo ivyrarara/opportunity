@@ -34,7 +34,8 @@ pytest
       - 오프라인 검증: `python -m opmon.adapters.jobkorea --company nhn --fixture tests/fixtures/jobkorea_nhn_synthetic.html`
       - 라이브 probe(접근 뚫린 환경): `python -m opmon.adapters.jobkorea --company nhn --probe`
 - [x] 3. Outcome/classifier/aggregator (§5) — 순수 로직 완료. crawl_state는 인메모리 구현(Firestore는 4단계)
-- [ ] 4. Firestore 중복 제거(postings)
+- [x] 4. Firestore 중복 제거(postings) — 저장소 추상화 + 인메모리/Firestore 구현 + `site+job_id` 중복제거.
+      실제 자격증명 연결은 배포 시점(§12): `GOOGLE_APPLICATION_CREDENTIALS`, `OPMON_FIRESTORE_PROJECT`
 - [ ] 5. 텔레그램 봇 알림 연동
 - [ ] 6. 스케줄 등록
 - [ ] 7. 시드 모드 1회 전체 실행 → 정상 알림 모드
