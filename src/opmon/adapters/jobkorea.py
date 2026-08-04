@@ -26,7 +26,7 @@ from ..models import Posting
 from ..outcomes import Outcome
 from .base import AdapterResult, RunContext
 
-DEFAULT_BASE = "https://m.jobkorea.co.kr"
+DEFAULT_BASE = "https://www.jobkorea.co.kr"
 
 
 @dataclass

@@ -14,11 +14,12 @@ from typing import Callable
 
 import httpx
 
-# 실제 모바일 브라우저 헤더 세트 (§6-2). 빈약한 지문이 봇으로 오인되는 것을 완화.
+# 실제 데스크탑 브라우저 헤더 세트 (§6-2). 빈약한 지문이 봇으로 오인되는 것을 완화.
+# 잡코리아는 모바일 UA면 m.jobkorea(검색어 무시)로 유도되므로 데스크탑 UA로 www를 취득한다(실측).
 REAL_BROWSER_HEADERS: dict[str, str] = {
     "User-Agent": (
-        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) "
-        "AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1"
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
     ),
     "Accept": (
         "text/html,application/xhtml+xml,application/xml;q=0.9,"

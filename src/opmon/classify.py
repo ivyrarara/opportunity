@@ -9,6 +9,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 import httpx
@@ -62,6 +63,12 @@ def classify(
         soup = BeautifulSoup(body, "html.parser")
         if not any(soup.select(sel) for sel in anchors):
             return Outcome.SUSPICIOUS_EMPTY, {**meta, "reason": "no_page_anchor"}
+    elif cfg.get("title_contains"):
+        # CSS 앵커가 없는 사이트(React 등)는 <title> 텍스트로 "우리 페이지인가" 확인
+        tm = re.search(r"<title[^>]*>(.*?)</title>", body, re.I | re.S)
+        title_txt = tm.group(1) if tm else ""
+        if not any(t in title_txt for t in cfg["title_contains"]):
+            return Outcome.SUSPICIOUS_EMPTY, {**meta, "reason": "no_title_anchor"}
 
     # 4) declared count + items 추출 (다층 fallback)
     declared, items, ex = extract_with_fingerprint(body, cfg, base=base)
@@ -72,10 +79,22 @@ def classify(
 
     if declared == 0:
         return Outcome.OK_EMPTY_TRUSTED, {**meta, "count": 0}
-    if declared is not None and declared > parsed:
-        return Outcome.PARSE_ERROR, meta
-    if parsed > 0:
-        return Outcome.OK_WITH_RESULTS, {**meta, "count": parsed}
+
+    if cfg.get("paginated"):
+        # 페이지네이션 소스: declared는 전체(모든 페이지), parsed는 1페이지.
+        # declared>parsed는 정상. "총 N건인데 하나도 못 뽑음"만 파손으로 본다.
+        if parsed > 0:
+            return Outcome.OK_WITH_RESULTS, {**meta, "count": parsed}
+        if declared is not None and declared > 0:
+            return Outcome.PARSE_ERROR, meta  # 위장: count는 있는데 파싱 0
+    else:
+        # 단일 페이지 소스: declared==parsed 여야 정상. 부족하면 부분 파싱 실패.
+        if declared is not None and declared > parsed:
+            return Outcome.PARSE_ERROR, meta
+        if parsed > 0:
+            return Outcome.OK_WITH_RESULTS, {**meta, "count": parsed}
+
+    # parsed==0 공통 처리: 명시적 빈 마커가 있어야만 0건 신뢰 (§5-1)
     if any(m in body for m in cfg.get("empty_markers", [])):
         return Outcome.OK_EMPTY_TRUSTED, {**meta, "count": 0}
     return Outcome.SUSPICIOUS_EMPTY, {**meta, "reason": "empty_without_marker"}

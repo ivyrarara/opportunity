@@ -14,29 +14,27 @@ from __future__ import annotations
 
 from typing import Any
 
-# [검증필요] 실측 전 잠정값. probe로 확정 후 갱신.
+# 실측 완료 (2026-08, www.jobkorea NHN probe). 데스크탑 www가 실제 검색됨(모바일 m은 검색어 무시).
+# 구조: React SSR(Next.js). 클래스명 불안정(Tailwind) → 안정 표식(GI_Read 링크, CardJob, 제목 총N건)에 베팅.
 JOBKOREA_M_FINGERPRINT: dict[str, Any] = {
-    "url_ok_patterns": [r"m\.jobkorea\.co\.kr"],
-    "title_contains": ["잡코리아", "채용", "검색"],  # [검증필요]
-    "count_selectors": [  # "총 N건" — 위→아래 우선순위 [검증필요]
+    "url_ok_patterns": [r"www\.jobkorea\.co\.kr", r"jobkorea\.co\.kr"],
+    # 결과 제목엔 "채용", 빈 결과 제목엔 "잡코리아"/"통합검색" → ANY 매칭으로 페이지 확인
+    "title_contains": ["잡코리아", "채용", "검색", "통합검색"],
+    "count_selectors": [  # "총 N건" — 제목/본문에서 (제목 <title>이 본문 앞이라 먼저 매칭됨)
         {"type": "text_regex", "pattern": r"총\s*([\d,]+)\s*건"},
-        {"type": "text_regex", "pattern": r"검색결과\s*([\d,]+)"},
-        {"type": "text_regex", "pattern": r"채용중\s*([\d,]+)"},
     ],
-    "jsonld_types": ["JobPosting", "ItemList"],
-    "anchor_selectors": ["#content", "form.form-search"],  # [검증필요]
-    "item_selectors": [  # 위→아래 fallback [검증필요]
-        'a[href*="/Recruit/GI_Read/"]',  # L3 링크패턴 (잘 안 바뀜)
-        'a[href*="/Recruit/Co_Read/"]',  # L3
-        ".list-default .list-post",  # L4 클래스 (개편 시 1순위 파손)
-        ".recruit-info .list-item",  # L4
+    "jsonld_types": ["JobPosting", "ItemList"],  # 잡코리아는 BreadcrumbList뿐이라 미사용 → 링크패턴 계층으로
+    "anchor_selectors": [],  # CSS 앵커 대신 title_contains로 페이지 확인 (React라 안정 클래스 없음)
+    "paginated": True,  # 페이지당 20건 / 총 N건. declared>parsed는 정상(파싱0일 때만 파손)
+    "item_selectors": [  # L3 링크패턴에 베팅 (React 클래스 불안정)
+        'a[href*="/Recruit/GI_Read/"]',  # 공고 상세 링크 — 카드마다 존재, 실측 확인
+        'a[href*="/Recruit/Co_Read/"]',  # 회사 상세 (fallback)
     ],
-    "empty_markers": [  # [검증필요]
-        "검색결과가 없습니다",
-        "검색된 공고가 없",
-        "일치하는 채용정보가 없",
-        "등록된 채용정보가 없",
-        "결과가 없습니다",
+    "empty_markers": [  # 실측: 빈 결과 페이지에 존재 확인
+        "검색결과가 없",
+        "결과가 없",
+        "다시 검색",
+        "일치하는",
     ],
     "block_markers": [
         "비정상적인 접근",
@@ -49,7 +47,7 @@ JOBKOREA_M_FINGERPRINT: dict[str, Any] = {
         "unusual traffic",
     ],
     "login_redirect_hosts": ["login.jobkorea.co.kr"],
-    "min_body_bytes": 3000,
+    "min_body_bytes": 5000,  # 실측: 결과 344KB / 빈결과 211KB. 봇 차단 페이지는 보통 훨씬 작음
     # 공고 상세 링크로 job_id를 뽑을 URL 패턴 (사이트 고유 ID 우선; §2-2)
     "job_id_url_patterns": [
         r"/Recruit/GI_Read/(\d+)",
