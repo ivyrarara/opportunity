@@ -250,6 +250,7 @@
       "adapter": "hyundai",
       "urls": [],
       "brand_filter": null,
+      "failure_tolerant": true,
       "notes": "NetFunnel 대기열. 맨 마지막·실패 허용"
     }
   ],

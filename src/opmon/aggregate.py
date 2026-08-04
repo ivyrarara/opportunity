@@ -14,7 +14,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
-from .outcomes import BAD_OUTCOMES, Outcome
+from .outcomes import BAD_OUTCOMES, OK_OUTCOMES, Outcome
 from .state import StateStore
 
 SUSPICIOUS_ALERT_THRESHOLD = 2   # 연속 N회 의심이면 알림 (디바운스)
@@ -31,6 +31,8 @@ class RunResult:
     company_id: str
     outcome: Outcome
     meta: dict[str, Any] = field(default_factory=dict)
+    # 실패 허용 회사(§4 현대차 등): 실패가 전체차단 비율 계산에서 제외되고 알림도 억제된다.
+    failure_tolerant: bool = False
 
 
 @dataclass
@@ -67,8 +69,10 @@ def aggregate(
 ) -> list[Action]:
     """실행 결과 목록 → Action 목록. 상태를 갱신하며 디바운스를 적용한다."""
     actions: list[Action] = []
-    total = len(run_results)
-    bad = [r for r in run_results if r.outcome in BAD_OUTCOMES]
+    # 실패 허용 회사는 전체차단 비율 계산에서 제외 (기대된 실패가 fleet 판정을 오염시키지 않도록).
+    scored = [r for r in run_results if not r.failure_tolerant]
+    total = len(scored)
+    bad = [r for r in scored if r.outcome in BAD_OUTCOMES]
 
     # 전체회사 축: 다수 동시 실패/의심 → 사이트 전체 차단으로 승격, 개별 알림 억제.
     if total >= FLEET_MIN_TOTAL and len(bad) / total >= FLEET_BLOCK_RATIO:
@@ -82,6 +86,11 @@ def aggregate(
     for r in run_results:
         cid, outcome, meta = r.company_id, r.outcome, r.meta
         st = state_store.get(cid)
+
+        # 실패 허용 회사: 실패 Outcome은 감사 로그만 남기고 알림·카운터 조작 없음 (조용히 허용).
+        if r.failure_tolerant and outcome not in OK_OUTCOMES:
+            actions.append(_log(cid, outcome, meta))
+            continue
 
         if outcome == Outcome.OK_WITH_RESULTS:
             count = int(meta.get("count", meta.get("parsed", 0)))

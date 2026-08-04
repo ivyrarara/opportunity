@@ -78,7 +78,10 @@ def run_once(
             continue
 
         summary.companies_run.append(company.id)
-        summary.run_results.append(RunResult(company.id, result.outcome, result.meta))
+        summary.run_results.append(RunResult(
+            company.id, result.outcome, result.meta,
+            failure_tolerant=company.failure_tolerant,
+        ))
         all_records.extend(PostingRecord.from_match(m, company.id) for m in result.matches)
 
     # 신규 저장 (§8-1)

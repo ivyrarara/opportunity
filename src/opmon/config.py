@@ -54,6 +54,8 @@ class Company(BaseModel):
     brand_filter: str | None = None
     fingerprint: str | None = None
     notes: str | None = None
+    # 실패 허용 회사(예: 현대차 NetFunnel §4). 실패가 전체차단 비율을 오염시키지 않고 알림도 억제.
+    failure_tolerant: bool = False
 
 
 class KeywordSet(BaseModel):
