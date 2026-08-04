@@ -1,0 +1,75 @@
+<!--
+  SYNTHETIC FIXTURE — [검증필요]
+  실제 m.jobkorea.co.kr 응답이 아니라, fingerprint(§6-3) 구조 가정에 맞춰 손으로 만든 표본이다.
+  egress 정책상 라이브 접근이 막혀 있어, 파싱·매칭 로직의 오프라인 세로 검증에만 쓴다.
+  network 되는 환경에서 §6-4 probe로 실제 HTML을 박제하면 이 파일을 교체할 것.
+
+  담긴 6건은 §3 판정 순서의 각 분기를 커버한다:
+   A 정상 매칭(AI, 경력 하한 5) / B 제외어(계약직) / C 경력미달(신입)
+   D 경력확인불가(경력 필드 없음) / E 카테고리 무매칭 / F 브랜딩+영어가능 하이라이트
+-->
+<!DOCTYPE html>
+<html lang="ko">
+<head><title>엔에이치엔 채용 검색 결과 | 잡코리아</title></head>
+<body>
+  <div id="content">
+    <form class="form-search"><input name="stext" value="엔에이치엔"></form>
+    <p class="count-area">총 6건</p>
+    <ul class="list-default">
+      <li>
+        <a class="list-post" href="/Recruit/GI_Read/45201001?Oem_Code=C1&amp;logpath=1">
+          <span class="title">AI 서비스 기획자 (경력 5~10년)</span>
+          <span class="dept">AI플랫폼실</span>
+          <span class="exp">경력 5~10년</span>
+          <span class="employ">정규직</span>
+          <span class="date">2026-08-01</span>
+        </a>
+      </li>
+      <li>
+        <a class="list-post" href="/Recruit/GI_Read/45201002">
+          <span class="title">UX 디자이너 채용</span>
+          <span class="dept">디자인센터</span>
+          <span class="exp">경력 5년 이상</span>
+          <span class="employ">계약직</span>
+          <span class="date">2026-08-02</span>
+        </a>
+      </li>
+      <li>
+        <a class="list-post" href="/Recruit/GI_Read/45201003">
+          <span class="title">브랜드 디자이너 (신입)</span>
+          <span class="dept">브랜드경험팀</span>
+          <span class="exp">신입</span>
+          <span class="employ">정규직</span>
+          <span class="date">2026-08-02</span>
+        </a>
+      </li>
+      <li>
+        <a class="list-post" href="/Recruit/GI_Read/45201004">
+          <span class="title">시니어 패키지 디자이너</span>
+          <span class="dept">인쇄 감리팀</span>
+          <span class="employ">정규직</span>
+          <span class="date">2026-08-03</span>
+        </a>
+      </li>
+      <li>
+        <a class="list-post" href="/Recruit/GI_Read/45201005">
+          <span class="title">재무 회계 담당자</span>
+          <span class="dept">재무팀</span>
+          <span class="exp">경력 7년</span>
+          <span class="employ">정규직</span>
+          <span class="date">2026-08-03</span>
+        </a>
+      </li>
+      <li>
+        <a class="list-post" href="/Recruit/GI_Read/45201006">
+          <span class="title">브랜딩 매니저 (BX)</span>
+          <span class="dept">브랜드전략실</span>
+          <span class="exp">경력 8년, 비즈니스 영어 가능</span>
+          <span class="employ">정규직</span>
+          <span class="date">2026-08-03</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+</body>
+</html>

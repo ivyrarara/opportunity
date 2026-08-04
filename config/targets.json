@@ -1,0 +1,269 @@
+{
+  "companies": [
+    {
+      "id": "nhn",
+      "name": "NHN",
+      "adapter": "jobkorea",
+      "urls": ["https://m.jobkorea.co.kr"],
+      "brand_filter": "엔에이치엔",
+      "fingerprint": "JOBKOREA_M_FINGERPRINT",
+      "notes": "최우선 검증 대상. 잡코리아 모바일, 가장 먼저 실제 응답 검증 대상"
+    },
+    {
+      "id": "sk_elecklink",
+      "name": "SK일렉링크",
+      "adapter": "jobkorea",
+      "urls": ["https://m.jobkorea.co.kr"],
+      "brand_filter": "에스케이일렉링크",
+      "fingerprint": "JOBKOREA_M_FINGERPRINT"
+    },
+    {
+      "id": "loreal",
+      "name": "로레알코리아",
+      "adapter": "jobkorea",
+      "urls": ["https://m.jobkorea.co.kr"],
+      "brand_filter": "로레알",
+      "fingerprint": "JOBKOREA_M_FINGERPRINT",
+      "notes": "시니어는 글로벌 사이트에만 있을 수 있음"
+    },
+    {
+      "id": "mercedes_benz_korea",
+      "name": "메르세데스벤츠코리아",
+      "adapter": "jobkorea",
+      "urls": ["https://m.jobkorea.co.kr"],
+      "brand_filter": "메르세데스벤츠코리아",
+      "fingerprint": "JOBKOREA_M_FINGERPRINT",
+      "notes": "외국계, 공고 적음"
+    },
+    {
+      "id": "ea_korea",
+      "name": "일렉트로닉아츠코리아",
+      "adapter": "jobkorea",
+      "urls": ["https://m.jobkorea.co.kr"],
+      "brand_filter": "일렉트로닉아츠",
+      "fingerprint": "JOBKOREA_M_FINGERPRINT",
+      "notes": "국내 볼륨 적음"
+    },
+    {
+      "id": "gsk_korea",
+      "name": "글락소스미스클라인",
+      "adapter": "jobkorea",
+      "urls": ["https://m.jobkorea.co.kr"],
+      "brand_filter": "글락소스미스클라인",
+      "fingerprint": "JOBKOREA_M_FINGERPRINT",
+      "notes": "매칭 낮음"
+    },
+    {
+      "id": "applied_materials_korea",
+      "name": "어플라이드머티어리얼즈코리아",
+      "adapter": "jobkorea",
+      "urls": ["https://m.jobkorea.co.kr"],
+      "brand_filter": "어플라이드머티어리얼즈",
+      "fingerprint": "JOBKOREA_M_FINGERPRINT",
+      "notes": "엔지니어링 위주"
+    },
+    {
+      "id": "herbalife_korea",
+      "name": "한국허벌라이프",
+      "adapter": "jobkorea",
+      "urls": ["https://m.jobkorea.co.kr"],
+      "brand_filter": "한국허벌라이프",
+      "fingerprint": "JOBKOREA_M_FINGERPRINT",
+      "notes": "매칭 낮음(요청대로 포함)"
+    },
+    {
+      "id": "tossbank",
+      "name": "토스뱅크",
+      "adapter": "jobkorea",
+      "urls": ["https://m.jobkorea.co.kr"],
+      "brand_filter": "토스뱅크",
+      "fingerprint": "JOBKOREA_M_FINGERPRINT",
+      "notes": "자체 사이트 확인 시 spa 전환"
+    },
+    {
+      "id": "hanmi_pharm",
+      "name": "한미약품",
+      "adapter": "jobkorea",
+      "urls": ["https://m.jobkorea.co.kr"],
+      "brand_filter": "한미약품",
+      "fingerprint": "JOBKOREA_M_FINGERPRINT"
+    },
+    {
+      "id": "pfizer_korea",
+      "name": "한국화이자제약",
+      "adapter": "jobkorea",
+      "urls": ["https://m.jobkorea.co.kr"],
+      "brand_filter": "한국화이자제약",
+      "fingerprint": "JOBKOREA_M_FINGERPRINT",
+      "notes": "매칭 낮음"
+    },
+    {
+      "id": "hybe",
+      "name": "하이브",
+      "adapter": "jobkorea",
+      "urls": ["https://m.jobkorea.co.kr"],
+      "brand_filter": "하이브",
+      "fingerprint": "JOBKOREA_M_FINGERPRINT",
+      "notes": "브랜딩/BX 상대적으로 많음"
+    },
+    {
+      "id": "cj_enm",
+      "name": "CJ ENM",
+      "adapter": "jobkorea",
+      "urls": ["https://m.jobkorea.co.kr"],
+      "brand_filter": "씨제이이엔엠",
+      "fingerprint": "JOBKOREA_M_FINGERPRINT",
+      "notes": "company.cjenm.com 있으면 전환 검토"
+    },
+    {
+      "id": "incheon_airport",
+      "name": "인천국제공항공사",
+      "adapter": "jobkorea",
+      "urls": ["https://m.jobkorea.co.kr"],
+      "brand_filter": "인천국제공항공사",
+      "fingerprint": "JOBKOREA_M_FINGERPRINT",
+      "notes": "공기업 → 나라일터 병행 검토"
+    },
+    {
+      "id": "korea_tourism_org",
+      "name": "한국관광공사",
+      "adapter": "jobkorea",
+      "urls": ["https://m.jobkorea.co.kr"],
+      "brand_filter": "한국관광공사",
+      "fingerprint": "JOBKOREA_M_FINGERPRINT",
+      "notes": "공기업 → 나라일터 병행 검토"
+    },
+    {
+      "id": "khfc",
+      "name": "한국주택금융공사",
+      "adapter": "jobkorea",
+      "urls": ["https://m.jobkorea.co.kr"],
+      "brand_filter": "한국주택금융공사",
+      "fingerprint": "JOBKOREA_M_FINGERPRINT",
+      "notes": "공기업, 행정직 위주"
+    },
+    {
+      "id": "skt",
+      "name": "SK텔레콤",
+      "adapter": "generic_list",
+      "urls": [],
+      "brand_filter": "SK텔레콤",
+      "notes": "SK 통합포털, 회사명 필터 필수"
+    },
+    {
+      "id": "gentlemonster",
+      "name": "젠틀몬스터",
+      "adapter": "generic_list",
+      "urls": [],
+      "brand_filter": "젠틀몬스터",
+      "notes": "IIC 산하 브랜드 혼재"
+    },
+    {
+      "id": "amorepacific",
+      "name": "아모레퍼시픽",
+      "adapter": "generic_list",
+      "urls": [],
+      "brand_filter": null,
+      "notes": "계열사 공고 혼재"
+    },
+    {
+      "id": "coupang",
+      "name": "쿠팡",
+      "adapter": "greenhouse",
+      "mode": "api",
+      "urls": [],
+      "brand_filter": null,
+      "notes": "공개 API 먼저 확인"
+    },
+    {
+      "id": "kakao",
+      "name": "카카오",
+      "adapter": "spa",
+      "urls": [],
+      "brand_filter": null,
+      "notes": "React SPA, 내부 API 검토"
+    },
+    {
+      "id": "naver",
+      "name": "네이버",
+      "adapter": "spa",
+      "urls": [],
+      "brand_filter": null,
+      "notes": "계열사는 별도 사이트일 수 있음"
+    },
+    {
+      "id": "naver_cloud",
+      "name": "네이버클라우드",
+      "adapter": "spa",
+      "urls": [],
+      "brand_filter": "네이버클라우드",
+      "notes": "naver 설정 재사용 + brand_filter"
+    },
+    {
+      "id": "kakaobank",
+      "name": "카카오뱅크",
+      "adapter": "spa",
+      "mode": "render",
+      "urls": [],
+      "brand_filter": null,
+      "notes": "자체 사이트, UX/AI 활발"
+    },
+    {
+      "id": "toss",
+      "name": "비바리퍼블리카(토스)",
+      "adapter": "spa",
+      "mode": "api",
+      "urls": [],
+      "brand_filter": null,
+      "notes": "SPA 공통 로직 검증 시작점"
+    },
+    {
+      "id": "apr",
+      "name": "에이피알(APR)",
+      "adapter": "spa",
+      "mode": "api",
+      "urls": [],
+      "brand_filter": null,
+      "notes": "ATS일 수 있음"
+    },
+    {
+      "id": "weverse_company",
+      "name": "위버스컴퍼니",
+      "adapter": "spa",
+      "mode": "api",
+      "urls": [],
+      "brand_filter": null,
+      "notes": "하이브 계열 자체 사이트"
+    },
+    {
+      "id": "hyundai_mobis",
+      "name": "현대모비스",
+      "adapter": "spa",
+      "mode": "render",
+      "urls": [],
+      "brand_filter": null,
+      "notes": "개인화 UI, 렌더 필요"
+    },
+    {
+      "id": "hyundai",
+      "name": "현대자동차",
+      "adapter": "hyundai",
+      "urls": [],
+      "brand_filter": null,
+      "failure_tolerant": true,
+      "notes": "NetFunnel 대기열. 맨 마지막·실패 허용"
+    }
+  ],
+  "keyword_sets": [
+    { "category": "UX/HMI", "keywords": ["UX", "UI", "HMI", "인포테인먼트", "클러스터", "SDV", "인터랙션 디자인", "사용자 경험"] },
+    { "category": "AI", "keywords": ["AI", "인공지능", "LLM", "생성형", "머신러닝", "AI기획", "AI PM", "AI 서비스 기획"] },
+    { "category": "접근성", "keywords": ["접근성", "Accessibility", "a11y", "배리어프리", "WCAG", "보조기술", "스크린리더"] },
+    { "category": "브랜딩", "keywords": ["브랜딩", "브랜드 디자인", "BX", "Brand Experience", "브랜드 아이덴티티", "BI", "CI"] },
+    { "category": "패키지/인쇄", "keywords": ["패키지 디자인", "패키지", "인쇄 감리", "인쇄감리", "Print Production", "그래픽 디자인"] }
+  ],
+  "highlight_tags": [
+    { "tag": "영어가능", "keywords": ["영어 가능", "영어 능통", "영어 커뮤니케이션", "English", "비즈니스 영어", "원어민 수준"] }
+  ],
+  "exclude_keywords": ["계약직", "단기", "파견직", "임시직", "촉탁직"],
+  "min_experience_years": 5
+}
