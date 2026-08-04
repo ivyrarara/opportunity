@@ -9,6 +9,8 @@ description = "Opportunity monitor — 관심 카테고리 신규 공고 알림 
 requires-python = ">=3.11"
 dependencies = [
     "pydantic>=2.5",
+    "httpx>=0.27",           # HTTP 취득 + 텔레그램 전송
+    "beautifulsoup4>=4.12",  # HTML 파싱(§6-5 추출기)
 ]
 
 [project.optional-dependencies]

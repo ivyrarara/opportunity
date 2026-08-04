@@ -198,6 +198,16 @@ def main(argv: list[str] | None = None) -> int:
           f"공고알림 {summary.dispatch.posting_messages_sent} "
           f"(시드억제 {summary.dispatch.suppressed_by_seed}) / "
           f"운영알림 {summary.dispatch.alert_messages_sent}")
+
+    # dry-run: 실제로 잡혀서 "보냈을" 메시지를 콘솔에 미리보기 (검증용, 전송·저장 안 함)
+    if args.dry_run:
+        msgs = getattr(notifier, "messages", [])
+        if msgs:
+            print(f"\n[dry-run] 보냈을 메시지 {len(msgs)}건 미리보기:")
+            for i, m in enumerate(msgs, 1):
+                print(f"\n--- 메시지 {i} ---\n{m}")
+        else:
+            print("\n[dry-run] 매칭된 신규 공고 없음 (알림 메시지 0건)")
     return 0
 
 
