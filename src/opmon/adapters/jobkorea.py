@@ -16,11 +16,15 @@ from urllib.parse import quote
 
 import httpx
 
-from ..config import Company
+from ..classify import classify
+from ..config import Company, TargetsConfig
 from ..extract import extract_with_fingerprint
 from ..fingerprints import get_fingerprint
 from ..http_client import REAL_BROWSER_HEADERS, fetch
+from ..matching import evaluate_posting
 from ..models import Posting
+from ..outcomes import Outcome
+from .base import AdapterResult, RunContext
 
 DEFAULT_BASE = "https://m.jobkorea.co.kr"
 
@@ -62,6 +66,26 @@ def parse_search(body: str, company: Company, base: str | None = None) -> tuple[
     fp = get_fingerprint(company.fingerprint or "JOBKOREA_M_FINGERPRINT")
     base = base or (company.urls[0] if company.urls else DEFAULT_BASE)
     return extract_with_fingerprint(body, fp, base=base)
+
+
+def run(company: Company, cfg: TargetsConfig, ctx: RunContext) -> AdapterResult:
+    """어댑터 러너: 취득 → classify(§5) → 매칭(§3). 오케스트레이터가 호출한다."""
+    if ctx.rate_limiter is not None:
+        ctx.rate_limiter.wait()
+    out = fetch_search(company, client=ctx.client)
+
+    fp = get_fingerprint(company.fingerprint or "JOBKOREA_M_FINGERPRINT")
+    base = company.urls[0] if company.urls else DEFAULT_BASE
+    outcome, meta = classify(out.response, out.exception, fp, base=base)
+
+    matches: list = []
+    if outcome == Outcome.OK_WITH_RESULTS and out.response is not None:
+        _, postings, _ = parse_search(out.response.text, company, base=base)
+        for p in postings:
+            mr = evaluate_posting(p, cfg)
+            if mr is not None:
+                matches.append(mr)
+    return AdapterResult(outcome=outcome, meta=meta, matches=matches)
 
 
 # --- probe / 콘솔 데모 (§6-4 겸용) ---------------------------------------

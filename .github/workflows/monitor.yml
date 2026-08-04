@@ -1,0 +1,49 @@
+# 기회 모니터링 스케줄 (명세 §9: 07:00 Toronto ≈ 20:00 KST, 1일 1회)
+#
+# GitHub cron은 UTC만 지원하고 DST를 모른다. 07:00 America/Toronto는
+# EDT(여름) 11:00 UTC / EST(겨울) 12:00 UTC → 아래는 11:00 UTC 고정(겨울엔 06:00 현지).
+# 개인 일일 알림엔 이 ±1h 드리프트가 무해하다. 엄밀히 맞추려면 실행 초입에서
+# America/Toronto 로컬시간을 확인해 07시가 아니면 조기 종료하는 가드를 넣어라.
+#
+# 스케줄 워크플로우는 기본 브랜치에서만 발화한다 → 병합 전엔 실행되지 않는다.
+# 실행 전 리포지토리 Secrets를 설정할 것:
+#   OPMON_TELEGRAM_TOKEN, OPMON_TELEGRAM_CHAT_ID, OPMON_FIRESTORE_PROJECT, GCP_SA_KEY(JSON)
+
+name: opportunity-monitor
+
+on:
+  schedule:
+    - cron: "0 11 * * *"      # 11:00 UTC ≈ 07:00 America/Toronto (EDT)
+  workflow_dispatch:
+    inputs:
+      seed:
+        description: "시드 모드(공고 알림 억제, DB만)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: opportunity-monitor
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: pip install -e ".[firestore]"
+      - name: Write service account key
+        run: |
+          printf '%s' "${{ secrets.GCP_SA_KEY }}" > "$RUNNER_TEMP/sa.json"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/sa.json" >> "$GITHUB_ENV"
+      - name: Run monitor
+        env:
+          OPMON_TELEGRAM_TOKEN: ${{ secrets.OPMON_TELEGRAM_TOKEN }}
+          OPMON_TELEGRAM_CHAT_ID: ${{ secrets.OPMON_TELEGRAM_CHAT_ID }}
+          OPMON_FIRESTORE_PROJECT: ${{ secrets.OPMON_FIRESTORE_PROJECT }}
+        run: |
+          python -m opmon.pipeline ${{ (inputs.seed && '--seed') || '' }}

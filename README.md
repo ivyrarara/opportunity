@@ -38,7 +38,10 @@ pytest
       실제 자격증명 연결은 배포 시점(§12): `GOOGLE_APPLICATION_CREDENTIALS`, `OPMON_FIRESTORE_PROJECT`
 - [x] 5. 텔레그램 봇 알림 연동 — §9 포맷 렌더 + Notifier 추상화(인메모리/텔레그램) + dispatch(시드 억제 훅).
       실제 봇 토큰은 배포 시점: `OPMON_TELEGRAM_TOKEN`, `OPMON_TELEGRAM_CHAT_ID` (`.env.example` 참조)
-- [ ] 6. 스케줄 등록
+- [x] 6. 스케줄 등록 + 오케스트레이터 — `run_once`(config→취득→classify→저장→aggregate→알림),
+      어댑터 레지스트리(미구현 어댑터 자동 스킵), GitHub Actions 크론(11:00 UTC≈07:00 Toronto).
+      - 드라이런: `python -m opmon.pipeline --dry-run --only nhn`
+      - 실행: `python -m opmon.pipeline [--seed] [--only ...]` (env 필요)
 - [ ] 7. 시드 모드 1회 전체 실행 → 정상 알림 모드
 - [ ] 8. SPA 그룹 (토스 검증 → 확장)
 - [ ] 9. 현대차 NetFunnel (맨 마지막·실패 허용)
