@@ -28,7 +28,11 @@ pytest
 명세 §10 순서대로 한 단계씩 진행한다.
 
 - [x] 1. `config/targets.json` 로더 + 스키마 검증
-- [ ] 2. 잡코리아 NHN 1곳 end-to-end 세로 검증
+- [~] 2. 잡코리아 NHN end-to-end 세로 검증 — **파싱·매칭·콘솔출력까지 오프라인 완료**.
+      단, 이 세션은 egress 정책상 `m.jobkorea.co.kr` 접근이 차단되어 §6-4 라이브 probe 미완.
+      fingerprint의 `[검증필요]` 셀렉터/마커는 network 되는 환경에서 probe 1회로 확정 필요.
+      - 오프라인 검증: `python -m opmon.adapters.jobkorea --company nhn --fixture tests/fixtures/jobkorea_nhn_synthetic.html`
+      - 라이브 probe(접근 뚫린 환경): `python -m opmon.adapters.jobkorea --company nhn --probe`
 - [ ] 3. Outcome/classifier/aggregator + crawl_errors·crawl_state
 - [ ] 4. Firestore 중복 제거(postings)
 - [ ] 5. 텔레그램 봇 알림 연동
