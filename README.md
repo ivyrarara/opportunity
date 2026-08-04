@@ -33,7 +33,7 @@ pytest
       fingerprint의 `[검증필요]` 셀렉터/마커는 network 되는 환경에서 probe 1회로 확정 필요.
       - 오프라인 검증: `python -m opmon.adapters.jobkorea --company nhn --fixture tests/fixtures/jobkorea_nhn_synthetic.html`
       - 라이브 probe(접근 뚫린 환경): `python -m opmon.adapters.jobkorea --company nhn --probe`
-- [ ] 3. Outcome/classifier/aggregator + crawl_errors·crawl_state
+- [x] 3. Outcome/classifier/aggregator (§5) — 순수 로직 완료. crawl_state는 인메모리 구현(Firestore는 4단계)
 - [ ] 4. Firestore 중복 제거(postings)
 - [ ] 5. 텔레그램 봇 알림 연동
 - [ ] 6. 스케줄 등록
