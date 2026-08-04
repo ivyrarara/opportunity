@@ -1,29 +1,36 @@
-# 기회 모니터링 스케줄 (명세 §9: 07:00 Toronto ≈ 20:00 KST, 1일 1회)
+# 기회 모니터링 — 클라우드 자동 실행 (Firebase 없이, 파일저장소+상태를 레포에 커밋)
 #
-# GitHub cron은 UTC만 지원하고 DST를 모른다. 07:00 America/Toronto는
-# EDT(여름) 11:00 UTC / EST(겨울) 12:00 UTC → 아래는 11:00 UTC 고정(겨울엔 06:00 현지).
-# 개인 일일 알림엔 이 ±1h 드리프트가 무해하다. 엄밀히 맞추려면 실행 초입에서
-# America/Toronto 로컬시간을 확인해 07시가 아니면 조기 종료하는 가드를 넣어라.
+# 동작:
+#   1) 레포 체크아웃(이전 실행이 커밋해둔 state/ 포함 = "이미 본 공고" 기억)
+#   2) 파이프라인 실행 → 새 공고만 텔레그램 발송
+#   3) state/ 를 다시 커밋 → 다음 실행이 이어받음
 #
-# 스케줄 워크플로우는 기본 브랜치에서만 발화한다 → 병합 전엔 실행되지 않는다.
-# 실행 전 리포지토리 Secrets를 설정할 것:
-#   OPMON_TELEGRAM_TOKEN, OPMON_TELEGRAM_CHAT_ID, OPMON_FIRESTORE_PROJECT, GCP_SA_KEY(JSON)
+# 필요한 Secrets (Settings → Secrets and variables → Actions):
+#   OPMON_TELEGRAM_TOKEN, OPMON_TELEGRAM_CHAT_ID
+#
+# 최초 1회: Actions 탭에서 "Run workflow" → seed 체크 후 실행(알림 없이 현재 공고만 저장).
+# 이후 매일 자동으로 새 공고만 알림.
+#
+# cron은 UTC. 11:00 UTC ≈ 07:00 America/Toronto(EDT, 여름) / 06:00(EST, 겨울). ±1h 무해.
 
 name: opportunity-monitor
 
 on:
   schedule:
-    - cron: "0 11 * * *"      # 11:00 UTC ≈ 07:00 America/Toronto (EDT)
+    - cron: "0 11 * * *"
   workflow_dispatch:
     inputs:
       seed:
-        description: "시드 모드(공고 알림 억제, DB만)"
+        description: "시드 모드(알림 억제, 현재 공고만 저장 — 최초 1회 권장)"
         type: boolean
         default: false
 
 concurrency:
   group: opportunity-monitor
   cancel-in-progress: false
+
+permissions:
+  contents: write        # state/ 커밋백에 필요
 
 jobs:
   run:
@@ -33,17 +40,23 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
       - name: Install
-        run: pip install -e ".[firestore]"
-      - name: Write service account key
-        run: |
-          printf '%s' "${{ secrets.GCP_SA_KEY }}" > "$RUNNER_TEMP/sa.json"
-          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/sa.json" >> "$GITHUB_ENV"
+        run: pip install .
       - name: Run monitor
         env:
           OPMON_TELEGRAM_TOKEN: ${{ secrets.OPMON_TELEGRAM_TOKEN }}
           OPMON_TELEGRAM_CHAT_ID: ${{ secrets.OPMON_TELEGRAM_CHAT_ID }}
-          OPMON_FIRESTORE_PROJECT: ${{ secrets.OPMON_FIRESTORE_PROJECT }}
         run: |
-          python -m opmon.pipeline ${{ (inputs.seed && '--seed') || '' }}
+          python -m opmon.pipeline --store file --data-dir state ${{ (inputs.seed && '--seed') || '' }}
+      - name: Persist state
+        run: |
+          git config user.name "opmon-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add state/postings.json state/state.json   # 감사 로그(.jsonl)는 gitignore로 제외
+          if git diff --cached --quiet; then
+            echo "상태 변화 없음 — 커밋 생략"
+          else
+            git commit -m "opmon: 크롤 상태 갱신 [skip ci]"
+            git push
+          fi
