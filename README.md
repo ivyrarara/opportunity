@@ -43,5 +43,6 @@ pytest
       - 드라이런: `python -m opmon.pipeline --dry-run --only nhn`
       - 실행: `python -m opmon.pipeline [--seed] [--only ...]` (env 필요)
 - [x] 7. 시드 모드 — `--seed` 플래그·dispatch 억제 구현·테스트 완료. 실제 시드 실행 절차는 `DEPLOY.md` runbook
-- [ ] 8. SPA 그룹 (토스 검증 → 확장)
+- [~] 8. SPA 그룹 — api(§7-2)/render(§7-3) 공통 로직·어댑터 골격 완료(레지스트리 등록).
+      회사별 `SPA_FINGERPRINTS`는 DevTools 실측 후 채움(네트워크 필요) → 그전엔 자동 skip
 - [ ] 9. 현대차 NetFunnel (맨 마지막·실패 허용)

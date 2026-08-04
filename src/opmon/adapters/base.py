@@ -32,6 +32,10 @@ class AdapterResult:
     outcome: Outcome
     meta: dict[str, Any] = field(default_factory=dict)
     matches: list[MatchResult] = field(default_factory=list)  # §3 통과 공고만
+    # 어댑터는 등록됐지만 이 회사가 아직 설정 미완(예: SPA api_url 미확정)이면 skip.
+    # 오케스트레이터는 skip을 run_results에 넣지 않고 스킵 목록으로 처리한다.
+    skipped: bool = False
+    skip_reason: str | None = None
 
 
 # 어댑터 러너 시그니처: (company, cfg, ctx) -> AdapterResult

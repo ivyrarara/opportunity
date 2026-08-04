@@ -72,6 +72,11 @@ def run_once(
         except Exception as exc:  # 어댑터가 던져도 파이프라인은 계속
             result = AdapterResult(Outcome.TRANSPORT_ERROR, {"error": repr(exc)[:200]})
 
+        # 어댑터는 있지만 이 회사 설정이 미완이면 스킵 (§7 SPA 미확정 등)
+        if result.skipped:
+            summary.companies_skipped.append(company.id)
+            continue
+
         summary.companies_run.append(company.id)
         summary.run_results.append(RunResult(company.id, result.outcome, result.meta))
         all_records.extend(PostingRecord.from_match(m, company.id) for m in result.matches)
