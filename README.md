@@ -36,7 +36,8 @@ pytest
 - [x] 3. Outcome/classifier/aggregator (§5) — 순수 로직 완료. crawl_state는 인메모리 구현(Firestore는 4단계)
 - [x] 4. Firestore 중복 제거(postings) — 저장소 추상화 + 인메모리/Firestore 구현 + `site+job_id` 중복제거.
       실제 자격증명 연결은 배포 시점(§12): `GOOGLE_APPLICATION_CREDENTIALS`, `OPMON_FIRESTORE_PROJECT`
-- [ ] 5. 텔레그램 봇 알림 연동
+- [x] 5. 텔레그램 봇 알림 연동 — §9 포맷 렌더 + Notifier 추상화(인메모리/텔레그램) + dispatch(시드 억제 훅).
+      실제 봇 토큰은 배포 시점: `OPMON_TELEGRAM_TOKEN`, `OPMON_TELEGRAM_CHAT_ID` (`.env.example` 참조)
 - [ ] 6. 스케줄 등록
 - [ ] 7. 시드 모드 1회 전체 실행 → 정상 알림 모드
 - [ ] 8. SPA 그룹 (토스 검증 → 확장)
