@@ -284,11 +284,13 @@
     {
       "id": "hyundai_mobis",
       "name": "현대모비스",
-      "adapter": "spa",
-      "mode": "render",
-      "urls": [],
-      "brand_filter": null,
-      "notes": "개인화 UI, 렌더 필요"
+      "adapter": "jobkorea",
+      "urls": [
+        "https://www.jobkorea.co.kr"
+      ],
+      "brand_filter": "현대모비스",
+      "notes": "자동차 GUI/HMI 디자인 (UX/HMI 카테고리) | 잡코리아 검색",
+      "fingerprint": "JOBKOREA_M_FINGERPRINT"
     },
     {
       "id": "hyundai",
