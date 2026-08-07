@@ -377,6 +377,22 @@
       "brand_filter": "우아한형제들",
       "fingerprint": "JOBKOREA_M_FINGERPRINT",
       "notes": "테크플랫폼"
+    },
+    {
+      "id": "canada_goose",
+      "name": "Canada Goose",
+      "adapter": "workday",
+      "urls": [],
+      "brand_filter": null,
+      "notes": "토론토 HQ. Workday CXS. 위치 필터 Toronto/Canada/Remote"
+    },
+    {
+      "id": "aritzia",
+      "name": "Aritzia",
+      "adapter": "workday",
+      "urls": [],
+      "brand_filter": null,
+      "notes": "패션/리테일. Workday CXS(External). 위치 필터 Toronto/Canada/Remote"
     }
   ],
   "keyword_sets": [
@@ -440,6 +456,21 @@
         "Print Production",
         "그래픽 디자인"
       ]
+    },
+    {
+      "category": "Design(EN)",
+      "keywords": [
+        "Designer",
+        "Design ",
+        "Brand",
+        "Graphic",
+        "Visual",
+        "Creative",
+        "Packaging",
+        "Art Direction",
+        "Illustration",
+        "Experience Design"
+      ]
     }
   ],
   "highlight_tags": [
@@ -460,7 +491,10 @@
     "단기",
     "파견직",
     "임시직",
-    "촉탁직"
+    "촉탁직",
+    "Internship",
+    "Co-op",
+    "Co-Op"
   ],
   "min_experience_years": 5
 }

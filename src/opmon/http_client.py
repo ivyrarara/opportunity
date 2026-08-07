@@ -65,11 +65,14 @@ def fetch(
     backoff_base: float = 2.0,
     sleep: Callable[[float], None] = time.sleep,
     rng: random.Random | None = None,
+    method: str = "GET",
+    json_body: dict | None = None,
 ) -> tuple[httpx.Response | None, Exception | None]:
     """URL을 받아 (response, exception)을 반환.
 
     - 전송오류/5xx/429 → 지수 백오프(2s,4s,8s...+지터)로 재시도.
     - 4xx(403/401 등 정책성) → 재시도 없이 즉시 반환 (하머링 금지).
+    - method="POST" + json_body → JSON 본문 전송 (Workday CXS 등 §7 ATS API용).
     반환된 (resp, exc)는 상위 classifier(§5)가 Outcome으로 분류한다.
     """
     rng = rng or random.Random()
@@ -81,7 +84,11 @@ def fetch(
         exc: Exception | None = None
         for attempt in range(max_retries + 1):
             try:
-                resp = client.get(url, headers=headers or REAL_BROWSER_HEADERS)
+                resp = client.request(
+                    method, url,
+                    headers=headers or REAL_BROWSER_HEADERS,
+                    json=json_body,
+                )
                 exc = None
             except httpx.HTTPError as e:
                 resp, exc = None, e
