@@ -20,15 +20,8 @@ from ..matching import evaluate_posting
 from ..models import Posting
 from ..njoyn_boards import get_njoyn_config
 from ..outcomes import Outcome
+from ..relevance import is_design_or_access
 from .base import AdapterResult, RunContext
-
-# 제목 관련성 가드: '디자인' 또는 '접근성' 직군만 통과(사용자 요청 = 디자이너 + accessibility).
-_DESIGN_TOKENS = (
-    "designer", "design", "graphic", "visual", "packaging",
-    "art direction", "art director", "illustrat", "creative", "brand",
-    "ux", "ui", "motion", "multimedia",
-)
-_ACCESS_TOKENS = ("accessib", "aoda", "wcag", "inclusive", "a11y")
 
 _JOBID_RE = re.compile(r"[?&]jobid=([^&]+)", re.IGNORECASE)
 # 직무ID 형태의 텍스트(예: J0726-0469) — 제목이 아니므로 제목 후보에서 제외.
@@ -43,11 +36,6 @@ _EMPTY_MARKERS = (
     "no positions", "there are currently no", "no results",
 )
 _MIN_BODY_BYTES = 1500
-
-
-def _is_relevant(title: str) -> bool:
-    t = title.lower()
-    return any(tok in t for tok in _DESIGN_TOKENS) or any(tok in t for tok in _ACCESS_TOKENS)
 
 
 def listing_url(scfg: dict) -> str:
@@ -139,7 +127,7 @@ def parse_listing(body: str, base_url: str) -> list[Posting]:
 def classify_and_parse(body: str, base_url: str) -> tuple[Outcome, dict, list[Posting]]:
     """200 응답 본문 → (outcome, meta, 관련 Posting)."""
     all_posts = parse_listing(body, base_url)
-    relevant = [p for p in all_posts if _is_relevant(p.title)]
+    relevant = [p for p in all_posts if is_design_or_access(p.title)]
     meta = {"anchors": len(all_posts), "relevant": len(relevant)}
     if all_posts:
         outcome = Outcome.OK_WITH_RESULTS if relevant else Outcome.OK_EMPTY_TRUSTED

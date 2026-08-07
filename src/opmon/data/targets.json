@@ -398,6 +398,22 @@
       "urls": [],
       "brand_filter": null,
       "notes": "삼성 글로벌 Workday(sec). 밴쿠버/캐나다 UX·디자인 위치필터"
+    },
+    {
+      "id": "arcteryx",
+      "name": "Arc'teryx",
+      "adapter": "lever",
+      "urls": [],
+      "brand_filter": null,
+      "notes": "노스밴쿠버 본사. Lever API. 밴쿠버/BC/캐나다 디자인만"
+    },
+    {
+      "id": "bc_public_service",
+      "name": "BC Public Service (GDX)",
+      "adapter": "hrsmart",
+      "urls": [],
+      "brand_filter": null,
+      "notes": "BC 주정부(GDX). HRSmart 목록. 디자인+접근성 제목만"
     }
   ],
   "keyword_sets": [

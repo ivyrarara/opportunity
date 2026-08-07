@@ -45,6 +45,8 @@ class Adapter(str, Enum):
     HYUNDAI = "hyundai"
     WORKDAY = "workday"
     NJOYN = "njoyn"
+    LEVER = "lever"
+    HRSMART = "hrsmart"
 
 
 class Mode(str, Enum):
@@ -131,7 +133,7 @@ class TargetsConfig(BaseModel):
         # jobkorea/generic_list는 정적이라 mode를 두지 않는다. spa/greenhouse만 api|render 힌트를 가진다.
         static_adapters = {
             Adapter.JOBKOREA, Adapter.GENERIC_LIST, Adapter.HYUNDAI,
-            Adapter.WORKDAY, Adapter.NJOYN,
+            Adapter.WORKDAY, Adapter.NJOYN, Adapter.LEVER, Adapter.HRSMART,
         }
         for c in self.companies:
             if c.mode is not None and c.adapter in static_adapters:

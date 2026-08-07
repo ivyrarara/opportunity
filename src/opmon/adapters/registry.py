@@ -6,7 +6,7 @@ adapter 이름 → 러너. 여기 등록된 어댑터만 오케스트레이터�
 
 from __future__ import annotations
 
-from . import hyundai, jobkorea, njoyn, spa, workday
+from . import hrsmart, hyundai, jobkorea, lever, njoyn, spa, workday
 from .base import AdapterRunner
 
 REGISTRY: dict[str, AdapterRunner] = {
@@ -14,8 +14,10 @@ REGISTRY: dict[str, AdapterRunner] = {
     "spa": spa.run,             # §7 — config(SPA_FINGERPRINTS) 없는 회사는 어댑터가 skip
     "greenhouse": spa.run,      # ATS는 SPA api 경로 재사용 (§7-1). config로 board만 다르게
     "hyundai": hyundai.run,     # §9 — NetFunnel 대기열, 실패 허용(config failure_tolerant)
-    "workday": workday.run,     # 토론토 — Workday CXS POST API. config(WORKDAY_BOARDS) 없으면 skip
+    "workday": workday.run,     # 토론토/밴쿠버 — Workday CXS POST API. config(WORKDAY_BOARDS) 없으면 skip
     "njoyn": njoyn.run,         # 지자체(Vaughan 등) — Njoyn HTML 목록. config(NJOYN_BOARDS) 없으면 skip
+    "lever": lever.run,         # 브랜드(Arc'teryx 등) — Lever JSON API. config(LEVER_BOARDS) 없으면 skip
+    "hrsmart": hrsmart.run,     # 공공(BC Public Service 등) — HRSmart HTML 목록. config 없으면 skip
     # "generic_list": ...   # 후속 (SKT/젠틀몬스터/아모레)
 }
 
