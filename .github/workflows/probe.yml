@@ -1,0 +1,20 @@
+# 일회용 라이브 프로브 — Workday 5개 조회 + Shopify/Figma/Pinterest ATS 탐색.
+# 검증 후 이 파일과 scripts/probe_live.py 는 삭제한다. state 커밋 없음.
+name: probe-live
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: pip install .
+      - name: Run probe
+        run: python scripts/probe_live.py
