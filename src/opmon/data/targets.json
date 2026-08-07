@@ -382,6 +382,14 @@
       "urls": [],
       "brand_filter": null,
       "notes": "패션/리테일. Workday CXS(External). 위치 필터 Toronto/Canada/Remote"
+    },
+    {
+      "id": "vaughan",
+      "name": "City of Vaughan",
+      "adapter": "njoyn",
+      "urls": [],
+      "brand_filter": null,
+      "notes": "지자체(집 앞). Njoyn 목록 HTML. 디자인+접근성 제목만"
     }
   ],
   "keyword_sets": [
@@ -416,6 +424,10 @@
       "keywords": [
         "접근성",
         "Accessibility",
+        "Accessible",
+        "AODA",
+        "Inclusive Design",
+        "Inclusive",
         "a11y",
         "배리어프리",
         "WCAG",

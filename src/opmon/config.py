@@ -44,6 +44,7 @@ class Adapter(str, Enum):
     SPA = "spa"
     HYUNDAI = "hyundai"
     WORKDAY = "workday"
+    NJOYN = "njoyn"
 
 
 class Mode(str, Enum):
@@ -128,7 +129,10 @@ class TargetsConfig(BaseModel):
     @model_validator(mode="after")
     def _mode_matches_adapter(self) -> TargetsConfig:
         # jobkorea/generic_list는 정적이라 mode를 두지 않는다. spa/greenhouse만 api|render 힌트를 가진다.
-        static_adapters = {Adapter.JOBKOREA, Adapter.GENERIC_LIST, Adapter.HYUNDAI, Adapter.WORKDAY}
+        static_adapters = {
+            Adapter.JOBKOREA, Adapter.GENERIC_LIST, Adapter.HYUNDAI,
+            Adapter.WORKDAY, Adapter.NJOYN,
+        }
         for c in self.companies:
             if c.mode is not None and c.adapter in static_adapters:
                 raise ValueError(
