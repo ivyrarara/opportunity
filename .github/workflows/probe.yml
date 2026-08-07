@@ -1,4 +1,4 @@
-# 일회용 라이브 프로브 — Workday 5개 조회 + Shopify/Figma/Pinterest ATS 탐색.
+# 일회용 검증 — netflix/figma/pinterest 어댑터만 라이브 실행.
 # 검증 후 이 파일과 scripts/probe_live.py 는 삭제한다. state 커밋 없음.
 name: probe-live
 

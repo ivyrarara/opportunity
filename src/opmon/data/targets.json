@@ -310,6 +310,22 @@
       "urls": [],
       "brand_filter": null,
       "notes": "자체 채용 API(jobs.netflix.com). Consumer Products/브랜드/패키지, APAC·한국·리모트 위치필터"
+    },
+    {
+      "id": "figma",
+      "name": "Figma",
+      "adapter": "greenhouse",
+      "urls": [],
+      "brand_filter": null,
+      "notes": "Greenhouse 보드(token figma). 프로덕트/브랜드 디자인, 토론토·캐나다·Remote(북미)"
+    },
+    {
+      "id": "pinterest",
+      "name": "Pinterest",
+      "adapter": "greenhouse",
+      "urls": [],
+      "brand_filter": null,
+      "notes": "Greenhouse 보드(token pinterest). 프로덕트/브랜드/크리에이티브, 토론토·캐나다·Remote(북미)"
     }
   ],
   "keyword_sets": [

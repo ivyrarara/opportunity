@@ -135,7 +135,7 @@ class TargetsConfig(BaseModel):
         static_adapters = {
             Adapter.JOBKOREA, Adapter.GENERIC_LIST, Adapter.HYUNDAI,
             Adapter.WORKDAY, Adapter.NJOYN, Adapter.LEVER, Adapter.HRSMART,
-            Adapter.NETFLIX,
+            Adapter.NETFLIX, Adapter.GREENHOUSE,
         }
         for c in self.companies:
             if c.mode is not None and c.adapter in static_adapters:
