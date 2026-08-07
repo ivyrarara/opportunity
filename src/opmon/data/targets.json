@@ -408,6 +408,14 @@
       "notes": "노스밴쿠버 본사. Lever API. 밴쿠버/BC/캐나다 디자인만"
     },
     {
+      "id": "wealthsimple",
+      "name": "Wealthsimple",
+      "adapter": "lever",
+      "urls": [],
+      "brand_filter": null,
+      "notes": "토론토 핀테크. Lever API. 토론토/캐나다/리모트 디자인만"
+    },
+    {
       "id": "bc_public_service",
       "name": "BC Public Service (GDX)",
       "adapter": "hrsmart",

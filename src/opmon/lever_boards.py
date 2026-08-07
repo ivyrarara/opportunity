@@ -18,6 +18,11 @@ LEVER_BOARDS: dict[str, dict[str, Any]] = {
         "slug": "arcteryx.com",
         "location_contains": ["Vancouver", "British Columbia", ", BC", "Canada", "Remote"],
     },
+    # Wealthsimple — 토론토 본사 핀테크. jobs.lever.co/wealthsimple
+    "wealthsimple": {
+        "slug": "wealthsimple",
+        "location_contains": ["Toronto", "Ontario", "Vancouver", "Canada", "Remote"],
+    },
 }
 
 
