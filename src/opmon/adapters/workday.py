@@ -18,6 +18,7 @@ from ..extract import derive_job_id
 from ..matching import evaluate_posting
 from ..models import Posting
 from ..outcomes import Outcome
+from ..relevance import is_design_or_access
 from ..workday_boards import get_workday_config
 from .base import AdapterResult, RunContext
 
@@ -34,19 +35,9 @@ WD_HEADERS = {
 _PAGE_SIZE = 20
 _MAX_OFFSET = 200  # 안전 상한 (검색어당 최대 10페이지)
 
-# 제목 가드: Workday searchText는 본문까지 훑어 판매직·분석직을 끌어온다.
-# 영어 브랜드 약어("BI"/"CI")가 "Analytics & BI" 같은 데 오탐하는 것도 여기서 차단.
-# 아래 토큰이 "제목"에 하나라도 있어야 디자인 직무로 인정한다(소문자 비교).
-_DESIGN_TITLE_TOKENS = (
-    "designer", "design", "graphic", "visual", "packaging",
-    "art direction", "art director", "illustrat", "creative",
-    "brand experience", "ux", "ui",
-)
-
-
-def _is_design_title(title: str) -> bool:
-    t = title.lower()
-    return any(tok in t for tok in _DESIGN_TITLE_TOKENS)
+# 제목 가드: Workday searchText는 본문까지 훑어 판매직·분석직·법무를 끌어온다.
+# 공용 relevance(정확 토큰)로 디자인/접근성 제목만 통과시킨다.
+_is_design_title = is_design_or_access
 
 FetchFn = Callable[..., tuple[httpx.Response | None, Exception | None]]
 

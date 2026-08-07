@@ -9,7 +9,6 @@
 
 from __future__ import annotations
 
-import os
 import re
 from urllib.parse import urljoin
 
@@ -122,16 +121,7 @@ def run(company: Company, cfg: TargetsConfig, ctx: RunContext) -> AdapterResult:
     if bad is not None:
         return AdapterResult(outcome=bad[0], meta=bad[1])
 
-    body = resp.text  # type: ignore[union-attr]
-    outcome, meta, relevant = classify_and_parse(body, url)
-    if os.getenv("OPMON_HRSMART_DEBUG"):
-        low = body.lower()
-        print(f"[hrsmart:{company.id}] status={resp.status_code} bytes={len(body)} "  # type: ignore[union-attr]
-              f"raw_view={low.count('/posting/view/')} anchors={meta.get('anchors')} "
-              f"relevant={meta.get('relevant')}")
-        for p in parse_listing(body, url)[:12]:
-            print(f"   title· {p.title[:75]} | {p.job_id}")
-
+    outcome, meta, relevant = classify_and_parse(resp.text, url)  # type: ignore[union-attr]
     matches = []
     if outcome == Outcome.OK_WITH_RESULTS:
         for p in relevant:
