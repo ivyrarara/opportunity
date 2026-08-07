@@ -88,39 +88,6 @@
       "notes": "브랜딩/BX 상대적으로 많음"
     },
     {
-      "id": "incheon_airport",
-      "name": "인천국제공항공사",
-      "adapter": "jobkorea",
-      "urls": [
-        "https://www.jobkorea.co.kr"
-      ],
-      "brand_filter": "인천국제공항공사",
-      "fingerprint": "JOBKOREA_M_FINGERPRINT",
-      "notes": "공기업 → 나라일터 병행 검토"
-    },
-    {
-      "id": "korea_tourism_org",
-      "name": "한국관광공사",
-      "adapter": "jobkorea",
-      "urls": [
-        "https://www.jobkorea.co.kr"
-      ],
-      "brand_filter": "한국관광공사",
-      "fingerprint": "JOBKOREA_M_FINGERPRINT",
-      "notes": "공기업 → 나라일터 병행 검토"
-    },
-    {
-      "id": "khfc",
-      "name": "한국주택금융공사",
-      "adapter": "jobkorea",
-      "urls": [
-        "https://www.jobkorea.co.kr"
-      ],
-      "brand_filter": "한국주택금융공사",
-      "fingerprint": "JOBKOREA_M_FINGERPRINT",
-      "notes": "공기업, 행정직 위주"
-    },
-    {
       "id": "skt",
       "name": "SK텔레콤",
       "adapter": "generic_list",
