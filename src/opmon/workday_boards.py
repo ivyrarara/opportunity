@@ -52,6 +52,27 @@ WORKDAY_BOARDS: dict[str, dict[str, Any]] = {
         "location_contains": ["Vancouver", "British Columbia", "Canada", "Remote"],
         "max_offset": 40,
     },
+    # BMO — 토론토 본사 은행. Workday(실측: tenant bmo / site External).
+    "bmo": {
+        "host": "bmo.wd3.myworkdayjobs.com",
+        "tenant": "bmo",
+        "site": "External",
+        "locale": "en-US",
+        "search_texts": ["designer", "brand", "graphic", "creative"],
+        "location_contains": ["Toronto", "Ontario", "Canada", "Remote"],
+        "max_offset": 60,
+    },
+    # TD Bank — 토론토 본사 은행. Workday(실측: tenant td / site TD_Bank_Careers).
+    # 대형이라 페이지 상한 제한. "Data/IT Designer"류가 섞이지만 브랜드/비주얼 자리도 여기 뜸.
+    "td": {
+        "host": "td.wd3.myworkdayjobs.com",
+        "tenant": "td",
+        "site": "TD_Bank_Careers",
+        "locale": "en-US",
+        "search_texts": ["designer", "brand", "graphic", "creative"],
+        "location_contains": ["Toronto", "Ontario", "Canada", "Remote"],
+        "max_offset": 60,
+    },
 }
 
 
