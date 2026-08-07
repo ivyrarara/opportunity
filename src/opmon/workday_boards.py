@@ -52,6 +52,25 @@ WORKDAY_BOARDS: dict[str, dict[str, Any]] = {
         "location_contains": ["Vancouver", "British Columbia", "Canada", "Remote"],
         "max_offset": 40,
     },
+    # Samsung 미국 디자인 — SDIC(Samsung Design Innovation Center, SF) + SDA(Bay Area) +
+    # SRA(Mountain View) + SEA(NJ). 같은 글로벌 Workday(sec/Samsung_Careers), 위치만 미국.
+    # 디자인 이노베이션/미래 UX/컨셉까지 포함. 검색어는 역할+지역으로 좁혀 대형 테넌트 과다 페이지 방지.
+    "samsung_us": {
+        "host": "sec.wd3.myworkdayjobs.com",
+        "tenant": "sec",
+        "site": "Samsung_Careers",
+        "locale": "en-US",
+        "search_texts": [
+            "designer San Francisco", "designer California",
+            "design innovation", "UX designer United States",
+        ],
+        "location_contains": [
+            "San Francisco", "California", ", CA", "Mountain View", "San Jose",
+            "Bay Area", "Sunnyvale", "New Jersey", ", NJ", "Ridgefield",
+            "United States", "Remote",
+        ],
+        "max_offset": 40,
+    },
     # BMO — 토론토 본사 은행. Workday(실측: tenant bmo / site External).
     "bmo": {
         "host": "bmo.wd3.myworkdayjobs.com",

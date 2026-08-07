@@ -331,6 +331,14 @@
       "notes": "Greenhouse 보드(token pinterest). 프로덕트/브랜드/크리에이티브, 토론토·캐나다·Remote(북미)"
     },
     {
+      "id": "samsung_us",
+      "name": "Samsung US Design (SDIC/SDA)",
+      "adapter": "workday",
+      "urls": [],
+      "brand_filter": null,
+      "notes": "삼성 미국 디자인센터(SDIC SF·SDA Bay Area·SRA·SEA NJ). Workday(sec/Samsung_Careers). 미국 위치 디자인/UX/이노베이션. 사내 전배(L-1) 각"
+    },
+    {
       "id": "bmo",
       "name": "BMO",
       "adapter": "workday",
