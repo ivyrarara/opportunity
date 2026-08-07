@@ -15,14 +15,10 @@ from __future__ import annotations
 
 from typing import Any
 
-BAMBOOHR_BOARDS: dict[str, dict[str, Any]] = {
-    # NUDESTIX — Vaughan 뷰티 브랜드(패키지). BambooHR subdomain 'nudestix'.
-    # 소규모라 위치 필터 없이 디자인/패키지 제목이면 다 잡는다(Ivy 최적핏).
-    "nudestix": {
-        "subdomain": "nudestix",
-        "location_contains": [],
-    },
-}
+# 주의: BambooHR라도 회사가 JS 렌더 채용페이지를 쓰면 /careers/list가 HTML만 준다
+# (예: NUDESTIX — 실측 결과 JSON 미제공 + 현재 공고 0건이라 봇 대상에서 제외).
+# JSON(/careers/list에 result[] 반환)을 주는 BambooHR 회사만 여기 등록한다.
+BAMBOOHR_BOARDS: dict[str, dict[str, Any]] = {}
 
 
 def get_bamboohr_config(company_id: str) -> dict[str, Any] | None:

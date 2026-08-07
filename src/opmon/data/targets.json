@@ -328,14 +328,6 @@
       "notes": "Greenhouse 보드(token pinterest). 프로덕트/브랜드/크리에이티브, 토론토·캐나다·Remote(북미)"
     },
     {
-      "id": "nudestix",
-      "name": "NUDESTIX",
-      "adapter": "bamboohr",
-      "urls": [],
-      "brand_filter": null,
-      "notes": "Vaughan 뷰티 브랜드(패키지). BambooHR(nudestix). 위치필터 없음 — 디자인/패키지 제목이면 다 알림"
-    },
-    {
       "id": "bmo",
       "name": "BMO",
       "adapter": "workday",
