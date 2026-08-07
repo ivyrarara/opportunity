@@ -30,7 +30,7 @@ WORKDAY_BOARDS: dict[str, dict[str, Any]] = {
         "search_texts": ["designer", "packaging"],
         "location_contains": ["Toronto", "Ontario", "Canada", "Remote"],
     },
-    # Aritzia — 밴쿠버 본사이나 토론토 디자인/리테일 다수. 채용 URL:
+    # Aritzia — 밴쿠버 본사(토론토 포함 캐나다 전역). 채용 URL:
     #   aritzia.wd3.myworkdayjobs.com/en-US/External
     "aritzia": {
         "host": "aritzia.wd3.myworkdayjobs.com",
@@ -38,7 +38,17 @@ WORKDAY_BOARDS: dict[str, dict[str, Any]] = {
         "site": "External",
         "locale": "en-US",
         "search_texts": ["designer", "graphic", "packaging"],
-        "location_contains": ["Toronto", "Ontario", "Canada", "Remote"],
+        "location_contains": ["Toronto", "Ontario", "Vancouver", "British Columbia", "Canada", "Remote"],
+    },
+    # Samsung Electronics 글로벌 Workday. 밴쿠버(Samsung R&D) 등 캐나다 UX/디자인 타겟.
+    #   sec.wd3.myworkdayjobs.com/Samsung_Careers
+    "samsung": {
+        "host": "sec.wd3.myworkdayjobs.com",
+        "tenant": "sec",
+        "site": "Samsung_Careers",
+        "locale": "en-US",
+        "search_texts": ["designer Vancouver", "UX designer Canada", "designer Canada"],
+        "location_contains": ["Vancouver", "British Columbia", "Canada", "Remote"],
     },
 }
 

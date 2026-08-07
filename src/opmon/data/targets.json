@@ -390,6 +390,14 @@
       "urls": [],
       "brand_filter": null,
       "notes": "지자체(집 앞). Njoyn 목록 HTML. 디자인+접근성 제목만"
+    },
+    {
+      "id": "samsung",
+      "name": "Samsung (Canada/Vancouver)",
+      "adapter": "workday",
+      "urls": [],
+      "brand_filter": null,
+      "notes": "삼성 글로벌 Workday(sec). 밴쿠버/캐나다 UX·디자인 위치필터"
     }
   ],
   "keyword_sets": [
