@@ -87,9 +87,9 @@ def test_blocked_logs_and_alerts():
 
 def test_unregistered_adapter_skipped():
     adapters = {"jobkorea": lambda c, cfg, ctx: AdapterResult(Outcome.OK_WITH_RESULTS, {"count": 0}, [])}
-    summary, _ = _run(adapters, only=["skt"])  # skt=generic_list, 미등록
+    summary, _ = _run(adapters, only=["gentlemonster"])  # generic_list, 미등록
     assert summary.companies_run == []
-    assert summary.companies_skipped == ["skt"]
+    assert summary.companies_skipped == ["gentlemonster"]
 
 
 # --- 어댑터 예외 → TRANSPORT_ERROR --------------------------------------

@@ -90,10 +90,13 @@
     {
       "id": "skt",
       "name": "SK텔레콤",
-      "adapter": "generic_list",
-      "urls": [],
+      "adapter": "jobkorea",
+      "urls": [
+        "https://www.jobkorea.co.kr"
+      ],
       "brand_filter": "SK텔레콤",
-      "notes": "SK 통합포털, 회사명 필터 필수"
+      "fingerprint": "JOBKOREA_M_FINGERPRINT",
+      "notes": "사회적가치·설리번 등 공공/접근성 선행. 잡코리아 회사명 필터"
     },
     {
       "id": "gentlemonster",
