@@ -47,6 +47,7 @@ jobs:
         env:
           OPMON_TELEGRAM_TOKEN: ${{ secrets.OPMON_TELEGRAM_TOKEN }}
           OPMON_TELEGRAM_CHAT_ID: ${{ secrets.OPMON_TELEGRAM_CHAT_ID }}
+          OPMON_NETFLIX_DEBUG: "1"   # TEMP: Netflix API 스키마 실측용, 검증 후 제거
         run: |
           python -m opmon.pipeline --store file --data-dir state ${{ (inputs.seed && '--seed') || '' }}
       - name: Persist state
