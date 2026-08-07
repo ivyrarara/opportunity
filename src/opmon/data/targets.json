@@ -55,17 +55,6 @@
       "notes": "국내 볼륨 적음"
     },
     {
-      "id": "gsk_korea",
-      "name": "글락소스미스클라인",
-      "adapter": "jobkorea",
-      "urls": [
-        "https://www.jobkorea.co.kr"
-      ],
-      "brand_filter": "글락소스미스클라인",
-      "fingerprint": "JOBKOREA_M_FINGERPRINT",
-      "notes": "매칭 낮음"
-    },
-    {
       "id": "applied_materials_korea",
       "name": "어플라이드머티어리얼즈코리아",
       "adapter": "jobkorea",
@@ -88,27 +77,6 @@
       "notes": "자체 사이트 확인 시 spa 전환"
     },
     {
-      "id": "hanmi_pharm",
-      "name": "한미약품",
-      "adapter": "jobkorea",
-      "urls": [
-        "https://www.jobkorea.co.kr"
-      ],
-      "brand_filter": "한미약품",
-      "fingerprint": "JOBKOREA_M_FINGERPRINT"
-    },
-    {
-      "id": "pfizer_korea",
-      "name": "한국화이자제약",
-      "adapter": "jobkorea",
-      "urls": [
-        "https://www.jobkorea.co.kr"
-      ],
-      "brand_filter": "한국화이자제약",
-      "fingerprint": "JOBKOREA_M_FINGERPRINT",
-      "notes": "매칭 낮음"
-    },
-    {
       "id": "hybe",
       "name": "하이브",
       "adapter": "jobkorea",
@@ -118,17 +86,6 @@
       "brand_filter": "하이브",
       "fingerprint": "JOBKOREA_M_FINGERPRINT",
       "notes": "브랜딩/BX 상대적으로 많음"
-    },
-    {
-      "id": "cj_enm",
-      "name": "CJ ENM",
-      "adapter": "jobkorea",
-      "urls": [
-        "https://www.jobkorea.co.kr"
-      ],
-      "brand_filter": "씨제이이엔엠",
-      "fingerprint": "JOBKOREA_M_FINGERPRINT",
-      "notes": "company.cjenm.com 있으면 전환 검토"
     },
     {
       "id": "incheon_airport",
@@ -260,17 +217,6 @@
       "notes": "ATS일 수 있음"
     },
     {
-      "id": "weverse_company",
-      "name": "위버스컴퍼니",
-      "adapter": "jobkorea",
-      "urls": [
-        "https://www.jobkorea.co.kr"
-      ],
-      "brand_filter": "위버스컴퍼니",
-      "notes": "하이브 계열 자체 사이트 | 잡코리아 검색으로 전환",
-      "fingerprint": "JOBKOREA_M_FINGERPRINT"
-    },
-    {
       "id": "hyundai_mobis",
       "name": "현대모비스",
       "adapter": "jobkorea",
@@ -311,39 +257,6 @@
       "brand_filter": "네이버파이낸셜",
       "fingerprint": "JOBKOREA_M_FINGERPRINT",
       "notes": "금융/핀테크"
-    },
-    {
-      "id": "sm_ent",
-      "name": "에스엠엔터테인먼트",
-      "adapter": "jobkorea",
-      "urls": [
-        "https://www.jobkorea.co.kr"
-      ],
-      "brand_filter": "에스엠엔터테인먼트",
-      "fingerprint": "JOBKOREA_M_FINGERPRINT",
-      "notes": "엔터"
-    },
-    {
-      "id": "jyp_ent",
-      "name": "JYP엔터테인먼트",
-      "adapter": "jobkorea",
-      "urls": [
-        "https://www.jobkorea.co.kr"
-      ],
-      "brand_filter": "JYP엔터테인먼트",
-      "fingerprint": "JOBKOREA_M_FINGERPRINT",
-      "notes": "엔터"
-    },
-    {
-      "id": "bucketplace",
-      "name": "오늘의집(버킷플레이스)",
-      "adapter": "jobkorea",
-      "urls": [
-        "https://www.jobkorea.co.kr"
-      ],
-      "brand_filter": "버킷플레이스",
-      "fingerprint": "JOBKOREA_M_FINGERPRINT",
-      "notes": "테크플랫폼/PB"
     },
     {
       "id": "musinsa",
@@ -422,6 +335,14 @@
       "urls": [],
       "brand_filter": null,
       "notes": "BC 주정부(GDX). HRSmart 목록. 디자인+접근성 제목만"
+    },
+    {
+      "id": "netflix",
+      "name": "Netflix",
+      "adapter": "netflix",
+      "urls": [],
+      "brand_filter": null,
+      "notes": "자체 채용 API(jobs.netflix.com). Consumer Products/브랜드/패키지, APAC·한국·리모트 위치필터"
     }
   ],
   "keyword_sets": [

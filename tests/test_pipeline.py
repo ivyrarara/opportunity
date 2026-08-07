@@ -109,7 +109,7 @@ def test_adapter_exception_becomes_transport_error():
 
 def test_fleet_block_single_critical_alert():
     adapters = {"jobkorea": lambda c, cfg, ctx: AdapterResult(Outcome.BLOCKED, {"status": 403})}
-    four = ["nhn", "tossbank", "hanmi_pharm", "hybe"]  # 모두 jobkorea
+    four = ["nhn", "tossbank", "loreal", "hybe"]  # 모두 jobkorea
     summary, s = _run(adapters, only=four)
     alerts = [a for a in summary.actions if a.kind == "alert"]
     assert len(alerts) == 1

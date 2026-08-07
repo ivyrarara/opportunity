@@ -47,6 +47,7 @@ class Adapter(str, Enum):
     NJOYN = "njoyn"
     LEVER = "lever"
     HRSMART = "hrsmart"
+    NETFLIX = "netflix"
 
 
 class Mode(str, Enum):
@@ -134,6 +135,7 @@ class TargetsConfig(BaseModel):
         static_adapters = {
             Adapter.JOBKOREA, Adapter.GENERIC_LIST, Adapter.HYUNDAI,
             Adapter.WORKDAY, Adapter.NJOYN, Adapter.LEVER, Adapter.HRSMART,
+            Adapter.NETFLIX,
         }
         for c in self.companies:
             if c.mode is not None and c.adapter in static_adapters:
