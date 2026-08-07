@@ -14,7 +14,10 @@ CFG = load_targets()
 SCFG = {
     "host": "jobs.netflix.com",
     "search_texts": ["designer"],
-    "location_contains": ["Korea", "Seoul", "Singapore", "Japan", "Tokyo", "APAC", "Asia", "Remote"],
+    "location_contains": [
+        "Korea", "Seoul", "Singapore", "Japan", "Tokyo", "APAC", "Asia",
+        "Toronto", "Ontario", "Canada", "Remote",
+    ],
     "max_pages": 1,
 }
 
@@ -33,8 +36,10 @@ def _post(text, loc, pid, team="Consumer Products"):
 POSTINGS = [
     _post("Brand Designer, Consumer Products", "Seoul, South Korea", "n1"),
     _post("Graphic Designer", "Singapore", "n2"),
-    _post("Sales Manager", "Seoul, South Korea", "n3"),          # 위치 OK, 디자인 아님
-    _post("Product Designer", "Los Angeles, California", "n4"),  # 디자인, 위치 밖
+    _post("Sales Manager", "Seoul, South Korea", "n3"),           # 위치 OK, 디자인 아님
+    _post("Product Designer", "Los Angeles, California", "n4"),   # 디자인, 미국 온사이트 → 제외
+    _post("Packaging Designer, Consumer Products", "Toronto, Ontario", "n5"),  # 토론토 온사이트
+    _post("Visual Designer", "Remote, United States", "n6"),      # 북미 리모트
 ]
 
 
@@ -50,7 +55,7 @@ def test_collect_ok():
     with _client(_body(POSTINGS)) as c:
         outcome, meta, raw = collect(SCFG, client=c)
     assert outcome == Outcome.OK_WITH_RESULTS
-    assert meta["raw"] == 4 and meta["declared_max"] == 4
+    assert meta["raw"] == 6 and meta["declared_max"] == 6
 
 
 def test_collect_empty():
@@ -87,12 +92,15 @@ def test_run_filters_location_and_design(monkeypatch):
     with _client(_body(POSTINGS)) as c:
         res = run(_company(), CFG, RunContext(client=c))
     assert res.outcome == Outcome.OK_WITH_RESULTS
-    assert res.meta["located"] == 3   # n1,n2,n3 위치 통과 (n4 LA 제외)
-    assert res.meta["design"] == 2    # n1,n2 디자인 (n3 판매직 제외)
+    assert res.meta["located"] == 5   # n1,n2,n3,n5,n6 위치 통과 (n4 미국 온사이트 제외)
+    assert res.meta["design"] == 4    # n1,n2,n5,n6 디자인 (n3 판매직 제외)
     titles = {m.posting.title for m in res.matches}
-    assert titles == {"Brand Designer, Consumer Products", "Graphic Designer"}
+    assert titles == {
+        "Brand Designer, Consumer Products", "Graphic Designer",
+        "Packaging Designer, Consumer Products", "Visual Designer",
+    }
     urls = {m.posting.url for m in res.matches}
-    assert "https://jobs.netflix.com/jobs/n1" in urls
+    assert "https://jobs.netflix.com/jobs/n5" in urls  # 토론토
 
 
 def test_run_skips_when_unconfigured(monkeypatch):
