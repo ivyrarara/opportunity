@@ -122,7 +122,19 @@ def run(company: Company, cfg: TargetsConfig, ctx: RunContext) -> AdapterResult:
     if bad is not None:
         return AdapterResult(outcome=bad[0], meta=bad[1])
 
-    outcome, meta, relevant = classify_and_parse(resp.text, url)  # type: ignore[union-attr]
+    body = resp.text  # type: ignore[union-attr]
+    outcome, meta, relevant = classify_and_parse(body, url)
+    # --- 임시 진단 (실측용, 확인 후 제거) ---
+    import os as _os
+    if _os.getenv("OPMON_NJOYN_DEBUG"):
+        all_posts = parse_listing(body, url)
+        low = body.lower()
+        print(f"[njoyn:{company.id}] status={resp.status_code} bytes={len(body)} "  # type: ignore[union-attr]
+              f"raw_jobdetails={low.count('jobdetails')} raw_jobid={low.count('jobid=')} "
+              f"iframe={'<iframe' in low} anchors={len(all_posts)} relevant={len(relevant)}")
+        for p in all_posts[:8]:
+            print(f"   · {p.title[:70]} | {p.job_id}")
+    # --- /임시 진단 ---
     matches = []
     if outcome == Outcome.OK_WITH_RESULTS:
         for p in relevant:
