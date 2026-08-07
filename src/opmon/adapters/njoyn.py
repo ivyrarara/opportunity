@@ -31,6 +31,8 @@ _DESIGN_TOKENS = (
 _ACCESS_TOKENS = ("accessib", "aoda", "wcag", "inclusive", "a11y")
 
 _JOBID_RE = re.compile(r"[?&]jobid=([^&]+)", re.IGNORECASE)
+# 직무ID 형태의 텍스트(예: J0726-0469) — 제목이 아니므로 제목 후보에서 제외.
+_IDLIKE_RE = re.compile(r"^[A-Za-z]?\d{3,4}-\d+$")
 _EMPTY_MARKERS = (
     "no job", "no current", "no opportunit", "no matching",
     "no positions", "there are currently no", "no results",
@@ -67,26 +69,42 @@ def _classify_status(resp: httpx.Response | None, exc: Exception | None) -> tupl
     return None
 
 
+def _best_title(texts: list[str], job_id: str) -> str | None:
+    """한 공고의 여러 앵커 텍스트 중 실제 제목을 고른다.
+
+    Njoyn 행은 같은 Jobid로 링크가 여러 개(직무ID 셀·제목 셀 등)다. ID 형태·빈 텍스트를
+    제외하고 가장 긴 것을 제목으로 본다. 남는 게 없으면(제목 셀 없음) None.
+    """
+    cands = [t for t in texts if t and t != job_id and not _IDLIKE_RE.match(t)]
+    return max(cands, key=len) if cands else None
+
+
 def parse_listing(body: str, base_url: str) -> list[Posting]:
-    """목록 HTML → JobDetails 앵커 전체를 Posting으로(관련성 필터 이전)."""
+    """목록 HTML → JobDetails 공고를 Posting으로(관련성 필터 이전).
+
+    같은 Jobid의 앵커들을 묶어 그 중 실제 제목 텍스트를 선택한다(§ID 셀 링크 오인 방지).
+    """
     from bs4 import BeautifulSoup
 
     soup = BeautifulSoup(body, "html.parser")
-    seen: set[str] = set()
-    out: list[Posting] = []
+    groups: dict[str, dict] = {}  # job_id → {"url": 첫 href, "texts": [...]}
     for a in soup.select("a[href]"):
         href = a.get("href", "")
         if "jobdetails" not in href.lower():
             continue
-        title = a.get_text(strip=True)
-        if not title:
-            continue
         m = _JOBID_RE.search(href)
         job_id = m.group(1) if m else href
-        if job_id in seen:
+        g = groups.setdefault(job_id, {"url": urljoin(base_url, href), "texts": []})
+        text = a.get_text(strip=True)
+        if text:
+            g["texts"].append(text)
+
+    out: list[Posting] = []
+    for job_id, g in groups.items():
+        title = _best_title(g["texts"], job_id)
+        if not title:
             continue
-        seen.add(job_id)
-        out.append(Posting(job_id=job_id, title=title, url=urljoin(base_url, href)))
+        out.append(Posting(job_id=job_id, title=title, url=g["url"]))
     return out
 
 

@@ -15,20 +15,25 @@ SCFG = {"host": "cityofvaughan.njoyn.com", "clid": "74035", "lang": "1"}
 BASE = listing_url(SCFG)
 
 
-def _anchor(title, jobid):
+def _link(text, jobid):
     return (
         f'<a href="xweb.asp?clid=74035&Page=JobDetails&Jobid={jobid}'
-        f'&BRID=453711&lang=1">{title}</a>'
+        f'&BRID=453711&lang=1">{text}</a>'
     )
 
 
-LISTING_HTML = "<html><body><ul>" + "".join([
-    "<li>" + _anchor("Coordinator, Marketing, Creative and Production Services", "J0726-0469") + "</li>",
-    "<li>" + _anchor("Graphic Designer", "J0726-0470") + "</li>",
-    "<li>" + _anchor("Accessibility Advisor", "J0726-0471") + "</li>",
-    "<li>" + _anchor("Firefighter", "J0726-0472") + "</li>",
-    "<li>" + _anchor("Financial Analyst", "J0726-0473") + "</li>",
-]) + "</ul></body></html>"
+def _row(title, jobid):
+    """실제 Njoyn 행: 같은 Jobid로 ID 셀 링크 + 제목 셀 링크 2개."""
+    return f"<tr><td>{_link(jobid, jobid)}</td><td>{_link(title, jobid)}</td></tr>"
+
+
+LISTING_HTML = "<html><body><table>" + "".join([
+    _row("Coordinator, Marketing, Creative and Production Services", "J0726-0469"),
+    _row("Graphic Designer", "J0726-0470"),
+    _row("Accessibility Advisor", "J0726-0471"),
+    _row("Firefighter", "J0726-0472"),
+    _row("Financial Analyst", "J0726-0473"),
+]) + "</table></body></html>"
 
 
 def _client(html, status=200):
@@ -43,6 +48,8 @@ def test_parse_extracts_all_jobdetails_anchors():
     assert len(posts) == 5
     p = posts[0]
     assert p.job_id == "J0726-0469"
+    # 제목이 ID 셀 링크(J0726-0469)가 아니라 실제 제목으로 잡혀야 한다.
+    assert p.title == "Coordinator, Marketing, Creative and Production Services"
     assert p.url.startswith("https://cityofvaughan.njoyn.com/cl4/xweb/xweb.asp?")
     assert "Page=JobDetails" in p.url
 
