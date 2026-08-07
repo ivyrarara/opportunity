@@ -36,6 +36,9 @@ class JsonFilePostingStore(PostingStore):
         self._docs: dict[str, PostingRecord] = {}
         if self._path.exists():
             raw = json.loads(self._path.read_text(encoding="utf-8") or "{}")
+            # 방어: 저장소가 list(레코드 배열)로 잘못 기록돼도 죽지 않고 doc_id로 재키잉.
+            if isinstance(raw, list):
+                raw = {f"{r.get('site')}__{r.get('job_id')}": r for r in raw}
             self._docs = {k: PostingRecord.from_document(v) for k, v in raw.items()}
 
     def existing_job_ids(self, site: str, job_ids: Iterable[str]) -> set[str]:

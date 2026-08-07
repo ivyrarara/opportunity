@@ -26,6 +26,18 @@ def test_posting_store_persists_across_instances(tmp_path):
     assert s2.existing_job_ids("kakao", ["1"]) == set()  # site 분리
 
 
+def test_posting_store_tolerates_list_format(tmp_path):
+    # 저장소가 list(레코드 배열)로 잘못 기록돼도 죽지 않고 doc_id로 복원해야 한다.
+    import json
+    (tmp_path / "postings.json").write_text(json.dumps([
+        {"site": "vaughan", "job_id": "J1", "title": "UX Designer",
+         "url": "https://x/J1", "category": "Design(EN)"},
+    ]), encoding="utf-8")
+    s = JsonFilePostingStore(tmp_path)
+    assert len(s) == 1
+    assert s.existing_job_ids("vaughan", ["J1"]) == {"J1"}
+
+
 def test_posting_store_dedup_semantics(tmp_path):
     s = JsonFilePostingStore(tmp_path)
     s.add([_rec("toss", "1")])
