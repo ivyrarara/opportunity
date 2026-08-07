@@ -41,14 +41,16 @@ WORKDAY_BOARDS: dict[str, dict[str, Any]] = {
         "location_contains": ["Toronto", "Ontario", "Vancouver", "British Columbia", "Canada", "Remote"],
     },
     # Samsung Electronics 글로벌 Workday. 밴쿠버(Samsung R&D) 등 캐나다 UX/디자인 타겟.
+    # 글로벌 테넌트라 매우 큼 → 검색어를 위치 포함 구절로 좁히고 페이지 상한을 낮춘다.
     #   sec.wd3.myworkdayjobs.com/Samsung_Careers
     "samsung": {
         "host": "sec.wd3.myworkdayjobs.com",
         "tenant": "sec",
         "site": "Samsung_Careers",
         "locale": "en-US",
-        "search_texts": ["designer Vancouver", "UX designer Canada", "designer Canada"],
+        "search_texts": ["designer Vancouver", "designer Canada"],
         "location_contains": ["Vancouver", "British Columbia", "Canada", "Remote"],
+        "max_offset": 40,
     },
 }
 

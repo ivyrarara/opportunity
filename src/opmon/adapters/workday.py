@@ -95,6 +95,7 @@ def collect_workday(
     fetch_fn = fetch_fn or _default_fetch
     endpoint = _endpoint(scfg)
     searches = scfg.get("search_texts") or [""]
+    max_offset = int(scfg.get("max_offset", _MAX_OFFSET))  # 대형 테넌트(삼성 등) 과다 페이지네이션 방지
 
     union: dict[str, dict] = {}   # externalPath → item
     declared_max = 0
@@ -102,7 +103,7 @@ def collect_workday(
 
     for q in searches:
         offset = 0
-        while offset < _MAX_OFFSET:
+        while offset < max_offset:
             if rate_wait is not None:
                 rate_wait()
             body = {"appliedFacets": {}, "limit": _PAGE_SIZE, "offset": offset, "searchText": q}
