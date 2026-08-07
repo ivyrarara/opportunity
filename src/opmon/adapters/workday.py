@@ -34,6 +34,20 @@ WD_HEADERS = {
 _PAGE_SIZE = 20
 _MAX_OFFSET = 200  # 안전 상한 (검색어당 최대 10페이지)
 
+# 제목 가드: Workday searchText는 본문까지 훑어 판매직·분석직을 끌어온다.
+# 영어 브랜드 약어("BI"/"CI")가 "Analytics & BI" 같은 데 오탐하는 것도 여기서 차단.
+# 아래 토큰이 "제목"에 하나라도 있어야 디자인 직무로 인정한다(소문자 비교).
+_DESIGN_TITLE_TOKENS = (
+    "designer", "design", "graphic", "visual", "packaging",
+    "art direction", "art director", "illustrat", "creative",
+    "brand experience", "ux", "ui",
+)
+
+
+def _is_design_title(title: str) -> bool:
+    t = title.lower()
+    return any(tok in t for tok in _DESIGN_TITLE_TOKENS)
+
 FetchFn = Callable[..., tuple[httpx.Response | None, Exception | None]]
 
 
@@ -167,15 +181,15 @@ def run(company: Company, cfg: TargetsConfig, ctx: RunContext) -> AdapterResult:
 
     wants = scfg.get("location_contains") or []
     located = [it for it in raw if _location_ok(it, wants)]
+    # 제목 가드: 판매직·분석직 등 비(非)디자인 제목을 매칭 전에 제거(오탐 차단).
+    design = [it for it in located if _is_design_title(str(it.get("title") or ""))]
     matches = []
-    for p in parse_workday_items(located, scfg):
+    for p in parse_workday_items(design, scfg):
         mr = evaluate_posting(p, cfg)
         if mr is not None:
             matches.append(mr)
 
-    meta = {**meta, "located": len(located), "matched": len(matches)}
-    # 원본은 있었으나(raw>0) 위치 필터로 0이면 "신뢰 가능한 빈 결과"(사이트 정상, 토론토 없음).
-    final = Outcome.OK_WITH_RESULTS if located else Outcome.OK_EMPTY_TRUSTED
-    if not raw:
-        final = Outcome.OK_EMPTY_TRUSTED
+    meta = {**meta, "located": len(located), "design": len(design), "matched": len(matches)}
+    # 사이트는 정상 응답(raw>0)이나 토론토/디자인 필터로 0이면 "신뢰 가능한 빈 결과".
+    final = Outcome.OK_WITH_RESULTS if design else Outcome.OK_EMPTY_TRUSTED
     return AdapterResult(outcome=final, meta=meta, matches=matches)

@@ -172,6 +172,28 @@ def test_run_filters_by_location_and_matches(monkeypatch):
     assert res.matches[0].posting.title == "Senior Brand Designer"
 
 
+def test_run_drops_non_design_titles(monkeypatch):
+    # 실측에서 나온 오탐: 'Analytics & BI'(BI 오탐), 'Brand Ambassador'(판매직).
+    monkeypatch.setattr(workday, "get_workday_config", lambda cid: SCFG)
+
+    def handler(req: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json={
+            "total": 3,
+            "jobPostings": [
+                _job("Manager, Advanced Analytics & BI", "/job/T/AN_1"),
+                _job("Brand Ambassador Experience", "/job/T/BA_2"),
+                _job("Associate Graphic Designer", "/job/T/GD_3"),
+            ],
+        })
+
+    with _client(handler) as c:
+        res = run(_company(), CFG, RunContext(client=c))
+    assert res.meta["located"] == 3        # 셋 다 토론토
+    assert res.meta["design"] == 1         # 디자인 제목은 하나뿐
+    assert len(res.matches) == 1
+    assert res.matches[0].posting.title == "Associate Graphic Designer"
+
+
 def test_run_empty_trusted_when_no_toronto(monkeypatch):
     monkeypatch.setattr(workday, "get_workday_config", lambda cid: SCFG)
 

@@ -27,7 +27,7 @@ WORKDAY_BOARDS: dict[str, dict[str, Any]] = {
         "tenant": "canadagoose",
         "site": "CanadaGooseCareers",
         "locale": "en-US",
-        "search_texts": ["designer", "brand", "creative"],
+        "search_texts": ["designer", "packaging"],
         "location_contains": ["Toronto", "Ontario", "Canada", "Remote"],
     },
     # Aritzia — 밴쿠버 본사이나 토론토 디자인/리테일 다수. 채용 URL:
@@ -37,7 +37,7 @@ WORKDAY_BOARDS: dict[str, dict[str, Any]] = {
         "tenant": "aritzia",
         "site": "External",
         "locale": "en-US",
-        "search_texts": ["designer", "brand", "graphic", "packaging"],
+        "search_texts": ["designer", "graphic", "packaging"],
         "location_contains": ["Toronto", "Ontario", "Canada", "Remote"],
     },
 }
