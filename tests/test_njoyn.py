@@ -22,17 +22,29 @@ def _link(text, jobid):
     )
 
 
-def _row(title, jobid):
-    """실제 Njoyn 행: 같은 Jobid로 ID 셀 링크 + 제목 셀 링크 2개."""
-    return f"<tr><td>{_link(jobid, jobid)}</td><td>{_link(title, jobid)}</td></tr>"
+def _row(title, jobid, dept="General", etype="Permanent Full Time"):
+    """실제 Njoyn 행 구조: [ID(링크), 제목(plain), 부서, 고용형태, 게시일, 마감일,
+    View Job Details(링크)]. ID·버튼만 jobdetails 링크이고 제목은 plain text."""
+    return (
+        "<tr>"
+        f"<td>{_link(jobid, jobid)}</td>"
+        f"<td>{title}</td>"
+        f"<td>{dept}</td>"
+        f"<td>{etype}</td>"
+        "<td>August 4, 2026</td>"
+        "<td>August 25, 2026</td>"
+        f"<td>{_link('View Job Details', jobid)}</td>"
+        "</tr>"
+    )
 
 
 LISTING_HTML = "<html><body><table>" + "".join([
     _row("Coordinator, Marketing, Creative and Production Services", "J0726-0469"),
-    _row("Graphic Designer", "J0726-0470"),
-    _row("Accessibility Advisor", "J0726-0471"),
-    _row("Firefighter", "J0726-0472"),
-    _row("Financial Analyst", "J0726-0473"),
+    # 짧은 제목 — 옛 '가장 긴 셀' 방식이면 'Permanent Full Time'으로 오판했을 케이스.
+    _row("UX Designer", "J0726-0470", dept="IT"),
+    _row("Accessibility Advisor", "J0726-0471", dept="Corporate"),
+    _row("Firefighter", "J0726-0472", dept="Fire"),
+    _row("Corporate Financial Analyst", "J0726-0473", dept="Finance"),
 ]) + "</table></body></html>"
 
 
@@ -59,8 +71,8 @@ def test_relevance_filter_keeps_design_and_accessibility():
     assert outcome == Outcome.OK_WITH_RESULTS
     assert meta["anchors"] == 5 and meta["relevant"] == 3
     titles = {p.title for p in relevant}
-    assert "Firefighter" not in titles and "Financial Analyst" not in titles
-    assert "Graphic Designer" in titles and "Accessibility Advisor" in titles
+    assert "Firefighter" not in titles and "Corporate Financial Analyst" not in titles
+    assert "UX Designer" in titles and "Accessibility Advisor" in titles
 
 
 def test_empty_marker_is_trusted_empty():
@@ -100,7 +112,7 @@ def test_run_matches_design_and_accessibility(monkeypatch):
     assert res.outcome == Outcome.OK_WITH_RESULTS
     assert res.meta["relevant"] == 3
     titles = {m.posting.title for m in res.matches}
-    assert "Graphic Designer" in titles
+    assert "UX Designer" in titles
     assert "Accessibility Advisor" in titles
     assert "Coordinator, Marketing, Creative and Production Services" in titles
 

@@ -80,24 +80,29 @@ def _is_title_text(t: str, job_id: str) -> bool:
 
 
 def _row_title(anchor, job_id: str) -> str | None:
-    """앵커가 속한 행(tr/li)의 셀 텍스트에서 실제 제목을 뽑는다.
+    """앵커가 속한 행(tr/li)에서 제목 셀을 뽑는다.
 
-    Njoyn 목록은 제목이 링크가 아니라 같은 행의 별도 셀(plain text)에 있다.
-    행의 셀(td/th) 텍스트 중 ID·버튼을 제외하고, 링크로 감싸진 셀을 우선,
-    없으면 가장 긴 셀을 제목으로 본다.
+    Njoyn 목록 행 구조: [직무ID, 제목, 부서, 고용형태, 게시일, 마감일].
+    제목은 'ID 셀 바로 다음 셀'이다(길이 휴리스틱은 짧은 제목에서 오판하므로 위치 기반).
+    ID 셀을 못 찾으면 첫 제목형 셀로 폴백.
     """
     row = anchor.find_parent("tr") or anchor.find_parent(["li", "article", "div"])
     if row is None:
         return None
     cells = row.find_all(["td", "th"]) or [row]
-    linked, plain = [], []
-    for c in cells:
-        txt = c.get_text(" ", strip=True)
-        if not _is_title_text(txt, job_id):
-            continue
-        (linked if c.find("a", href=True) else plain).append(txt)
-    pool = linked or plain
-    return max(pool, key=len) if pool else None
+    texts = [c.get_text(" ", strip=True) for c in cells]
+    # ID 셀(=job_id 또는 ID 형태) 바로 다음의 '제목형' 셀.
+    for i, t in enumerate(texts):
+        if t == job_id or _IDLIKE_RE.match(t):
+            for nxt in texts[i + 1:]:
+                if _is_title_text(nxt, job_id):
+                    return nxt
+            break
+    # 폴백: 첫 제목형 셀.
+    for t in texts:
+        if _is_title_text(t, job_id):
+            return t
+    return None
 
 
 def parse_listing(body: str, base_url: str) -> list[Posting]:
@@ -163,31 +168,7 @@ def run(company: Company, cfg: TargetsConfig, ctx: RunContext) -> AdapterResult:
     if bad is not None:
         return AdapterResult(outcome=bad[0], meta=bad[1])
 
-    body = resp.text  # type: ignore[union-attr]
-    outcome, meta, relevant = classify_and_parse(body, url)
-    # --- 임시 진단 (실측용, 확인 후 제거) ---
-    import os as _os
-    if _os.getenv("OPMON_NJOYN_DEBUG"):
-        from bs4 import BeautifulSoup
-        all_posts = parse_listing(body, url)
-        low = body.lower()
-        print(f"[njoyn:{company.id}] status={resp.status_code} bytes={len(body)} "  # type: ignore[union-attr]
-              f"raw_jobdetails={low.count('jobdetails')} anchors={len(all_posts)} relevant={len(relevant)}")
-        for p in all_posts[:10]:
-            print(f"   title· {p.title[:75]} | {p.job_id}")
-        # 구조 확인용: 첫 3개 JobDetails 앵커의 부모 행 셀 텍스트 덤프
-        _soup = BeautifulSoup(body, "html.parser")
-        _seen = 0
-        for a in _soup.select("a[href]"):
-            if "jobdetails" not in a.get("href", "").lower():
-                continue
-            row = a.find_parent("tr") or a.find_parent(["li", "article", "div"])
-            cells = [c.get_text(" ", strip=True)[:40] for c in (row.find_all(["td", "th"]) if row else [])]
-            print(f"   ROW[{_seen}] cells={cells}")
-            _seen += 1
-            if _seen >= 3:
-                break
-    # --- /임시 진단 ---
+    outcome, meta, relevant = classify_and_parse(resp.text, url)  # type: ignore[union-attr]
     matches = []
     if outcome == Outcome.OK_WITH_RESULTS:
         for p in relevant:

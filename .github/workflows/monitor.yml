@@ -47,7 +47,6 @@ jobs:
         env:
           OPMON_TELEGRAM_TOKEN: ${{ secrets.OPMON_TELEGRAM_TOKEN }}
           OPMON_TELEGRAM_CHAT_ID: ${{ secrets.OPMON_TELEGRAM_CHAT_ID }}
-          OPMON_NJOYN_DEBUG: "1"   # 임시 진단(확인 후 제거)
         run: |
           python -m opmon.pipeline --store file --data-dir state ${{ (inputs.seed && '--seed') || '' }}
       - name: Persist state
