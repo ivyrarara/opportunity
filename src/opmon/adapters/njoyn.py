@@ -33,6 +33,11 @@ _ACCESS_TOKENS = ("accessib", "aoda", "wcag", "inclusive", "a11y")
 _JOBID_RE = re.compile(r"[?&]jobid=([^&]+)", re.IGNORECASE)
 # 직무ID 형태의 텍스트(예: J0726-0469) — 제목이 아니므로 제목 후보에서 제외.
 _IDLIKE_RE = re.compile(r"^[A-Za-z]?\d{3,4}-\d+$")
+# 링크 버튼 문구 — 제목이 아님.
+_BUTTON_RE = re.compile(
+    r"^(view\s*job\s*details|view\s*details|view|details|apply(\s*now)?|more\s*info)$",
+    re.IGNORECASE,
+)
 _EMPTY_MARKERS = (
     "no job", "no current", "no opportunit", "no matching",
     "no positions", "there are currently no", "no results",
@@ -69,42 +74,60 @@ def _classify_status(resp: httpx.Response | None, exc: Exception | None) -> tupl
     return None
 
 
-def _best_title(texts: list[str], job_id: str) -> str | None:
-    """한 공고의 여러 앵커 텍스트 중 실제 제목을 고른다.
+def _is_title_text(t: str, job_id: str) -> bool:
+    """제목 후보 판정: 비어있지 않고, 직무ID도 버튼 문구도 아닌 텍스트."""
+    return bool(t) and t != job_id and not _IDLIKE_RE.match(t) and not _BUTTON_RE.match(t)
 
-    Njoyn 행은 같은 Jobid로 링크가 여러 개(직무ID 셀·제목 셀 등)다. ID 형태·빈 텍스트를
-    제외하고 가장 긴 것을 제목으로 본다. 남는 게 없으면(제목 셀 없음) None.
+
+def _row_title(anchor, job_id: str) -> str | None:
+    """앵커가 속한 행(tr/li)의 셀 텍스트에서 실제 제목을 뽑는다.
+
+    Njoyn 목록은 제목이 링크가 아니라 같은 행의 별도 셀(plain text)에 있다.
+    행의 셀(td/th) 텍스트 중 ID·버튼을 제외하고, 링크로 감싸진 셀을 우선,
+    없으면 가장 긴 셀을 제목으로 본다.
     """
-    cands = [t for t in texts if t and t != job_id and not _IDLIKE_RE.match(t)]
-    return max(cands, key=len) if cands else None
+    row = anchor.find_parent("tr") or anchor.find_parent(["li", "article", "div"])
+    if row is None:
+        return None
+    cells = row.find_all(["td", "th"]) or [row]
+    linked, plain = [], []
+    for c in cells:
+        txt = c.get_text(" ", strip=True)
+        if not _is_title_text(txt, job_id):
+            continue
+        (linked if c.find("a", href=True) else plain).append(txt)
+    pool = linked or plain
+    return max(pool, key=len) if pool else None
 
 
 def parse_listing(body: str, base_url: str) -> list[Posting]:
     """목록 HTML → JobDetails 공고를 Posting으로(관련성 필터 이전).
 
-    같은 Jobid의 앵커들을 묶어 그 중 실제 제목 텍스트를 선택한다(§ID 셀 링크 오인 방지).
+    같은 Jobid의 앵커들을 묶고, 제목은 앵커가 속한 행의 셀에서 추출한다.
     """
     from bs4 import BeautifulSoup
 
     soup = BeautifulSoup(body, "html.parser")
-    groups: dict[str, dict] = {}  # job_id → {"url": 첫 href, "texts": [...]}
+    groups: dict[str, dict] = {}  # job_id → {"url", "title"}
     for a in soup.select("a[href]"):
         href = a.get("href", "")
         if "jobdetails" not in href.lower():
             continue
         m = _JOBID_RE.search(href)
         job_id = m.group(1) if m else href
-        g = groups.setdefault(job_id, {"url": urljoin(base_url, href), "texts": []})
-        text = a.get_text(strip=True)
-        if text:
-            g["texts"].append(text)
+        g = groups.setdefault(job_id, {"url": urljoin(base_url, href), "title": None})
+        title = _row_title(a, job_id)
+        # 다른 포털(제목=앵커 텍스트) 대비 fallback.
+        if not title:
+            t = a.get_text(strip=True)
+            title = t if _is_title_text(t, job_id) else None
+        if title and (g["title"] is None or len(title) > len(g["title"])):
+            g["title"] = title
 
     out: list[Posting] = []
     for job_id, g in groups.items():
-        title = _best_title(g["texts"], job_id)
-        if not title:
-            continue
-        out.append(Posting(job_id=job_id, title=title, url=g["url"]))
+        if g["title"]:
+            out.append(Posting(job_id=job_id, title=g["title"], url=g["url"]))
     return out
 
 
@@ -145,13 +168,25 @@ def run(company: Company, cfg: TargetsConfig, ctx: RunContext) -> AdapterResult:
     # --- 임시 진단 (실측용, 확인 후 제거) ---
     import os as _os
     if _os.getenv("OPMON_NJOYN_DEBUG"):
+        from bs4 import BeautifulSoup
         all_posts = parse_listing(body, url)
         low = body.lower()
         print(f"[njoyn:{company.id}] status={resp.status_code} bytes={len(body)} "  # type: ignore[union-attr]
-              f"raw_jobdetails={low.count('jobdetails')} raw_jobid={low.count('jobid=')} "
-              f"iframe={'<iframe' in low} anchors={len(all_posts)} relevant={len(relevant)}")
-        for p in all_posts[:8]:
-            print(f"   · {p.title[:70]} | {p.job_id}")
+              f"raw_jobdetails={low.count('jobdetails')} anchors={len(all_posts)} relevant={len(relevant)}")
+        for p in all_posts[:10]:
+            print(f"   title· {p.title[:75]} | {p.job_id}")
+        # 구조 확인용: 첫 3개 JobDetails 앵커의 부모 행 셀 텍스트 덤프
+        _soup = BeautifulSoup(body, "html.parser")
+        _seen = 0
+        for a in _soup.select("a[href]"):
+            if "jobdetails" not in a.get("href", "").lower():
+                continue
+            row = a.find_parent("tr") or a.find_parent(["li", "article", "div"])
+            cells = [c.get_text(" ", strip=True)[:40] for c in (row.find_all(["td", "th"]) if row else [])]
+            print(f"   ROW[{_seen}] cells={cells}")
+            _seen += 1
+            if _seen >= 3:
+                break
     # --- /임시 진단 ---
     matches = []
     if outcome == Outcome.OK_WITH_RESULTS:
