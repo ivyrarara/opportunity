@@ -77,17 +77,6 @@
       "notes": "엔지니어링 위주"
     },
     {
-      "id": "herbalife_korea",
-      "name": "한국허벌라이프",
-      "adapter": "jobkorea",
-      "urls": [
-        "https://www.jobkorea.co.kr"
-      ],
-      "brand_filter": "한국허벌라이프",
-      "fingerprint": "JOBKOREA_M_FINGERPRINT",
-      "notes": "매칭 낮음(요청대로 포함)"
-    },
-    {
       "id": "tossbank",
       "name": "토스뱅크",
       "adapter": "jobkorea",
