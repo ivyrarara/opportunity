@@ -1,13 +1,14 @@
-"""Netflix 자체 채용 API 어댑터.
+"""Netflix 자체 채용 API 어댑터 (Eightfold 기반).
 
-Netflix는 표준 ATS 대신 자체 채용사이트(jobs.netflix.com)를 운영한다. 그 SPA가
-호출하는 공개 검색 API를 그대로 쓴다:
+Netflix 채용은 Eightfold 사이트(explore.jobs.netflix.net)로 운영된다. 공개 검색
+API를 그대로 쓴다(실측 확인):
 
-  GET https://{host}/api/search?q={query}&page={n}
+  GET https://{host}/api/apply/v2/jobs?domain={domain}&start={n}&num={k}&query={q}
+  → {..., "count": N, "positions": [{id, name(제목), location, locations[], ...}]}
 
-응답 스키마는 개편 여지가 있어 방어적으로 파싱한다(records.postings 우선, 대체 키 탐색).
-"총 N건(declared) vs 파싱 대조" 원칙(§7)을 적용해 스키마 드리프트를 PARSE_ERROR로 잡는다.
-설정(netflix_boards.py) 없으면 skip. OPMON_NETFLIX_DEBUG=1이면 원본 키/샘플을 로깅한다.
+응답 스키마는 개편 여지가 있어 방어적으로 파싱한다(positions 우선, 대체 키 탐색).
+"총 N건(count) vs 파싱 대조" 원칙(§7)으로 스키마 드리프트를 PARSE_ERROR로 잡는다.
+설정(netflix_boards.py) 없으면 skip. OPMON_NETFLIX_DEBUG=1이면 원본 키/샘플 로깅.
 """
 
 from __future__ import annotations
@@ -36,7 +37,8 @@ JSON_HEADERS = {
     "Accept-Language": "en-US,en;q=0.9,ko;q=0.8",
 }
 
-_MAX_PAGES = 5
+_NUM = 25
+_MAX_PAGES = 4
 _DEBUG = "OPMON_NETFLIX_DEBUG"
 
 FetchFn = Callable[..., tuple[httpx.Response | None, Exception | None]]
@@ -47,9 +49,10 @@ def _dbg(msg: str) -> None:
         print(f"[netflix] {msg}")
 
 
-def _search_url(host: str, query: str, page: int) -> str:
+def _search_url(host: str, domain: str, query: str, start: int, num: int) -> str:
     q = quote(query)
-    return f"https://{host}/api/search?q={q}&page={page}"
+    return (f"https://{host}/api/apply/v2/jobs?domain={domain}"
+            f"&start={start}&num={num}&query={q}")
 
 
 def _classify_status(resp: httpx.Response | None, exc: Exception | None) -> tuple[Outcome, dict] | None:
@@ -70,29 +73,29 @@ def _classify_status(resp: httpx.Response | None, exc: Exception | None) -> tupl
 
 
 def _extract_postings(data: Any) -> list[dict] | None:
-    """방어적 파싱: records.postings 우선, 대체 키(postings/positions), 배열 원형까지."""
+    """방어적 파싱: positions 우선, 대체 키(jobs/records.postings), 배열 원형까지."""
     if isinstance(data, list):
         return [x for x in data if isinstance(x, dict)]
     if isinstance(data, dict):
+        for key in ("positions", "jobs", "results"):
+            if isinstance(data.get(key), list):
+                return [x for x in data[key] if isinstance(x, dict)]
         rec = data.get("records")
         if isinstance(rec, dict) and isinstance(rec.get("postings"), list):
             return [x for x in rec["postings"] if isinstance(x, dict)]
-        for key in ("postings", "positions", "results", "jobs"):
-            if isinstance(data.get(key), list):
-                return [x for x in data[key] if isinstance(x, dict)]
     return None
 
 
 def _declared_total(data: Any) -> int:
     if isinstance(data, dict):
+        for key in ("count", "total"):
+            if isinstance(data.get(key), int):
+                return data[key]
         info = data.get("info")
         if isinstance(info, dict):
             posts = info.get("postings")
             if isinstance(posts, dict) and isinstance(posts.get("total"), int):
                 return posts["total"]
-        for key in ("count", "total"):
-            if isinstance(data.get(key), int):
-                return data[key]
     return 0
 
 
@@ -114,36 +117,38 @@ def _loc_ok(loc: str, wants: list[str]) -> bool:
     return any(w.lower() in low for w in wants)
 
 
-def _to_posting(it: dict, host: str) -> Posting | None:
-    title = it.get("text") or it.get("name") or it.get("title")
+def _to_posting(it: dict, host: str, domain: str) -> Posting | None:
+    title = it.get("name") or it.get("posting_name") or it.get("text") or it.get("title")
     if not title:
         return None
-    job_id = it.get("external_id") or it.get("id") or it.get("job_id")
+    pid = it.get("id") or it.get("display_job_id") or it.get("ats_job_id")
     url = it.get("canonicalPositionUrl") or it.get("apply_url")
-    if not url and job_id is not None:
-        url = f"https://{host}/jobs/{job_id}"
+    if not url and pid is not None:
+        url = f"https://{host}/careers?pid={pid}&domain={domain}&sort_by=relevance"
     if not url:
         return None
-    team = it.get("team")
-    dept = " / ".join(str(x) for x in team if x) if isinstance(team, list) else (team or None)
+    dept = it.get("department") or it.get("business_unit")
+    t = it.get("t_create") or it.get("t_update")
     return Posting(
-        job_id=str(job_id or url),
+        job_id=str(it.get("display_job_id") or pid or url),
         title=str(title),
         url=str(url),
-        dept=dept,
-        posted_date=it.get("created_at") or it.get("t_create"),
+        dept=str(dept) if dept else None,
+        posted_date=str(t) if t else None,
     )
 
 
 def collect(scfg: dict[str, Any], *, client: httpx.Client | None = None,
             fetch_fn: FetchFn | None = None,
             rate_wait: Callable[[], Any] | None = None) -> tuple[Outcome, dict, list[dict]]:
-    """search_texts 전부를 page 순회, external_id/id 기준 dedupe."""
+    """search_texts 전부를 start/num 페이지네이션, id 기준 dedupe."""
     from ..http_client import fetch as _default_fetch
 
     fetch_fn = fetch_fn or _default_fetch
     host = scfg["host"]
+    domain = scfg.get("domain", "netflix.com")
     searches = scfg.get("search_texts") or [""]
+    num = int(scfg.get("num", _NUM))
     max_pages = int(scfg.get("max_pages", _MAX_PAGES))
 
     union: dict[str, dict] = {}
@@ -151,10 +156,11 @@ def collect(scfg: dict[str, Any], *, client: httpx.Client | None = None,
     pages = 0
 
     for q in searches:
-        for page in range(1, max_pages + 1):
+        for page in range(max_pages):
+            start = page * num
             if rate_wait is not None:
                 rate_wait()
-            url = _search_url(host, q, page)
+            url = _search_url(host, domain, q, start, num)
             resp, exc = fetch_fn(url, headers=JSON_HEADERS, client=client)
             pages += 1
             bad = _classify_status(resp, exc)
@@ -171,14 +177,15 @@ def collect(scfg: dict[str, Any], *, client: httpx.Client | None = None,
                     _dbg(f"schema keys={list(data)[:20] if isinstance(data, dict) else type(data)}")
                 return Outcome.PARSE_ERROR, {"reason": "schema_changed"}, []
             if pages == 1:
-                _dbg(f"q={q!r} page1 posts={len(posts)} sample={json.dumps(posts[0], ensure_ascii=False)[:400] if posts else 'none'}")
+                _dbg(f"q={q!r} p0 posts={len(posts)} sample={json.dumps(posts[0], ensure_ascii=False)[:400] if posts else 'none'}")
 
-            declared_max = max(declared_max, _declared_total(data))
+            total = _declared_total(data)
+            declared_max = max(declared_max, total)
             for it in posts:
-                key = str(it.get("external_id") or it.get("id") or it.get("text") or id(it))
+                key = str(it.get("id") or it.get("display_job_id") or it.get("name") or id(it))
                 if key not in union:
                     union[key] = it
-            if not posts:
+            if not posts or (total and start + num >= total):
                 break
 
     raw = list(union.values())
@@ -201,6 +208,7 @@ def run(company: Company, cfg: TargetsConfig, ctx: RunContext) -> AdapterResult:
         return AdapterResult(outcome=outcome, meta=meta)
 
     host = scfg["host"]
+    domain = scfg.get("domain", "netflix.com")
     wants = scfg.get("location_contains") or []
     located = design = 0
     matches = []
@@ -208,10 +216,10 @@ def run(company: Company, cfg: TargetsConfig, ctx: RunContext) -> AdapterResult:
         if not _loc_ok(_item_locations(it), wants):
             continue
         located += 1
-        title = str(it.get("text") or it.get("name") or it.get("title") or "")
+        title = str(it.get("name") or it.get("posting_name") or it.get("title") or "")
         if not is_design_or_access(title):
             continue
-        p = _to_posting(it, host)
+        p = _to_posting(it, host, domain)
         if p is None:
             continue
         design += 1
