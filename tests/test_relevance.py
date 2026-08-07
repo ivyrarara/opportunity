@@ -31,6 +31,8 @@ DROP = [
     "Visual Merchandising Planner - NAM",
     "Brand Ambassador Experience",
     "Manager, Advanced Analytics & BI",
+    "Project Specialist, Creative Strategy",
+    "P&C Business Partner - Creative, Merch, Footwear",
     "Facility Operator I",
     "Auxiliary Nursing Assistant",   # 'ux' 부분문자열 오탐 방지
     "Building Maintenance Worker",   # 'ui' 부분문자열 오탐 방지

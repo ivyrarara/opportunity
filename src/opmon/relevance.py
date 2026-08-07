@@ -23,7 +23,6 @@ _WORD_TOKENS = (
     "packaging",
     "illustrat",      # illustrator / illustration
     "typograph",
-    "creative",       # creative director/services/production
     "multimedia",
     "branding",
 )
@@ -32,8 +31,13 @@ _PHRASE_TOKENS = (
     "experience design", "communication design", "web design", "motion design",
     "visual design", "graphic design", "design system", "design lead",
     "design manager", "design director", "design specialist", "design strategist",
-    "art direction", "art director", "creative direction", "motion graphic",
+    "art direction", "art director", "motion graphic",
     "ux design", "ui design", "ux/ui", "ui/ux",
+    # 'creative'는 단독이면 마케팅·인사(Creative Strategy, Creative Business Partner)까지
+    # 걸리므로 디자인 문맥 구절로만 인정한다.
+    "creative director", "creative direction", "creative lead", "creative manager",
+    "creative services", "creative producer", "creative production",
+    "creative and production", "creative studio", "creative operations",
 )
 _ACCESS_TOKENS = ("accessib", "aoda", "wcag", "inclusive", "a11y", "barrier-free", "assistive")
 _UXUI_RE = re.compile(r"\b(?:ux|ui)\b", re.IGNORECASE)
