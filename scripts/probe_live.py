@@ -1,23 +1,21 @@
-"""일회용 Disney/LEGO ATS 탐지 + BX 자리 라이브 체크 (GitHub Actions 전용).
+"""일회용 LEGO Workday tenant/site 추출 + BX 자리 (GitHub Actions 전용).
 
-두 회사의 채용 시스템을 알아내고, 닿으면 디자인/브랜드/패키지/experience 자리를
-실제로 뽑는다. 검증 후 삭제.
+LEGO careers 가 wd103.myworkdayjobs.com(Workday) 사용 확인됨. careers 페이지에서
+정확한 tenant/site를 뽑아 CXS로 디자인/브랜드/패키지 자리를 조회한다. 검증 후 삭제.
 """
 
 from __future__ import annotations
 
-import json
 import re
 
 import httpx
 
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36")
-cj = httpx.Client(follow_redirects=True, timeout=25.0,
-                  headers={"User-Agent": UA, "Accept": "application/json"})
 ch = httpx.Client(follow_redirects=True, timeout=25.0,
                   headers={"User-Agent": UA, "Accept": "text/html,*/*;q=0.8"})
-
+cj = httpx.Client(follow_redirects=True, timeout=25.0,
+                  headers={"User-Agent": UA, "Accept": "application/json"})
 BX = re.compile(r"design|brand|packag|graphic|visual|creative|experience|art director|illustrat|merchand", re.I)
 
 
@@ -25,22 +23,31 @@ def line(*a):
     print(*a, flush=True)
 
 
-def detect(html):
-    low = html.lower()
-    sig = []
-    for k, name in [("myworkdayjobs", "WORKDAY"), ("successfactors", "SUCCESSFACTORS"),
-                    ("phenom", "PHENOM"), ("radancy", "RADANCY"), ("icims", "ICIMS"),
-                    ("greenhouse.io", "GREENHOUSE"), ("eightfold", "EIGHTFOLD"),
-                    ("avature", "AVATURE"), ("workablehr", "WORKABLE")]:
-        if k in low:
-            sig.append(name)
-    bot = any(b in low for b in ("perfdrive", "captcha", "botmanager", "are you human"))
-    return sig, bot
+HOST = "wd103.myworkdayjobs.com"
+# careers 페이지에서 site/tenant 단서 수집
+sites, tenants = set(), set()
+for url in ("https://www.lego.com/en-us/careers", "https://www.lego.com/en-us/careers/job-openings"):
+    try:
+        t = ch.get(url).text
+    except Exception:
+        continue
+    for m in re.findall(r'wd103\.myworkdayjobs\.com/(?:wday/cxs/)?([A-Za-z0-9_]+)(?:/([A-Za-z0-9_]+))?', t):
+        if m[0]:
+            tenants.add(m[0]); sites.add(m[0])
+        if m[1]:
+            sites.add(m[1])
+    for m in re.findall(r'/en-US/([A-Za-z0-9_]+)', t):
+        sites.add(m)
+line(f"추출 tenants={sorted(tenants)[:10]} sites={sorted(sites)[:15]}")
 
+# 후보 조합으로 CXS 시도
+tenant_cands = list(tenants) + ["lego", "legogroup", "thelegogroup", "LEGO"]
+site_cands = list(sites) + ["External", "LEGO_External_Career_Site", "LEGO_Careers", "lego", "Careers"]
 
-def try_workday(name, host, tenant, sites):
-    for site in sites:
-        url = f"https://{host}/wday/cxs/{tenant}/{site}/jobs"
+found = None
+for tn in dict.fromkeys(tenant_cands):
+    for st in dict.fromkeys(site_cands):
+        url = f"https://{HOST}/wday/cxs/{tn}/{st}/jobs"
         try:
             r = cj.post(url, json={"appliedFacets": {}, "limit": 20, "offset": 0, "searchText": "designer"},
                         headers={"Content-Type": "application/json"})
@@ -52,21 +59,26 @@ def try_workday(name, host, tenant, sites):
             except Exception:
                 continue
             if isinstance(d, dict) and "jobPostings" in d:
-                return host, site, d
-    return None
+                found = (tn, st, int(d.get("total") or 0))
+                line(f"✅ HIT tenant='{tn}' site='{st}' total≈{found[2]}")
+                break
+    if found:
+        break
 
-
-def workday_pull(name, host, tenant, site):
-    base = f"https://{host}/wday/cxs/{tenant}/{site}/jobs"
-    jb = f"https://{host}/en-US/{site}"
+if not found:
+    line("❌ CXS 조합 못 찾음")
+else:
+    tn, st, _ = found
+    base = f"https://{HOST}/wday/cxs/{tn}/{st}/jobs"
+    jb = f"https://{HOST}/en-US/{st}"
     hits, seen = [], set()
-    for q in ("designer", "brand", "packaging", "graphic", "experience design"):
+    for q in ("designer", "brand", "packaging", "graphic", "experience"):
         try:
-            d = cj.post(base, json={"appliedFacets": {}, "limit": 20, "offset": 0, "searchText": q},
-                        headers={"Content-Type": "application/json"}).json()
+            posts = cj.post(base, json={"appliedFacets": {}, "limit": 20, "offset": 0, "searchText": q},
+                            headers={"Content-Type": "application/json"}).json().get("jobPostings", [])
         except Exception:
-            continue
-        for p in d.get("jobPostings", []):
+            posts = []
+        for p in posts:
             path = p.get("externalPath") or ""
             if path in seen:
                 continue
@@ -74,49 +86,8 @@ def workday_pull(name, host, tenant, site):
             t = p.get("title") or ""
             if BX.search(t):
                 hits.append((t, p.get("locationsText") or "", jb + path))
-    line(f"   ✅ Workday {host} site='{site}' — BX 자리 {len(hits)}")
-    for t, l, u in hits[:20]:
-        line(f"      • {t} — {l}")
+    line(f"\nLEGO BX 자리 {len(hits)}개:")
+    for t, l, u in hits[:25]:
+        line(f"  • {t} — {l}")
 
-
-# ---------------- Disney ----------------
-def disney():
-    line("\n########## DISNEY ##########")
-    wd = (try_workday("Disney", "disney.wd5.myworkdayjobs.com", "disney", ["disney", "External", "Professional"])
-          or try_workday("Disney", "disney.wd1.myworkdayjobs.com", "disney", ["disney", "External"]))
-    if wd:
-        workday_pull("Disney", *wd)
-    # 자체 careers API/landing 탐지
-    for url in ("https://jobs.disneycareers.com/api/jobs?keyword=designer&limit=20",
-                "https://jobs.disneycareers.com/search-jobs/results?ActiveFacetID=0&keyword=designer",
-                "https://jobs.disneycareers.com"):
-        try:
-            r = ch.get(url)
-        except Exception as e:
-            line(f"   {url}\n     ERR {type(e).__name__}"); continue
-        sig, bot = detect(r.text)
-        njobs = len(re.findall(r'/job/|jobId|requisitionId', r.text))
-        line(f"   {url}\n     HTTP {r.status_code} ATS={sig or '?'} bot={bot} len={len(r.text)} job신호={njobs}")
-
-
-# ---------------- LEGO ----------------
-def lego():
-    line("\n########## LEGO ##########")
-    wd = (try_workday("LEGO", "lego.wd3.myworkdayjobs.com", "lego", ["lego", "External", "LEGO_External"])
-          or try_workday("LEGO", "legogroup.wd3.myworkdayjobs.com", "legogroup", ["External", "lego"]))
-    if wd:
-        workday_pull("LEGO", *wd)
-    for url in ("https://www.lego.com/en-us/careers/job-openings",
-                "https://www.lego.com/en-us/careers"):
-        try:
-            r = ch.get(url)
-        except Exception as e:
-            line(f"   {url}\n     ERR {type(e).__name__}"); continue
-        sig, bot = detect(r.text)
-        hosts = sorted(set(re.findall(r"([a-z0-9-]+\.myworkdayjobs\.com)", r.text.lower())))
-        line(f"   {url}\n     HTTP {r.status_code} ATS={sig or '?'} bot={bot} len={len(r.text)} wd_hosts={hosts}")
-
-
-disney()
-lego()
-line("\n==================== DISNEY/LEGO PROBE DONE ====================")
+line("\n==================== LEGO PROBE DONE ====================")
