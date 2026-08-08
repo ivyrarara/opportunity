@@ -458,7 +458,20 @@
     "촉탁직",
     "Internship",
     "Co-op",
-    "Co-Op"
+    "Co-Op",
+    "Backend",
+    "backend",
+    "Back-end",
+    "back-end",
+    "Frontend",
+    "frontend",
+    "Front-end",
+    "front-end",
+    "Engineer",
+    "engineer",
+    "Developer",
+    "developer",
+    "개발자"
   ],
   "min_experience_years": 5
 }
