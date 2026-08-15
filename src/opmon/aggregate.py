@@ -33,6 +33,7 @@ class RunResult:
     meta: dict[str, Any] = field(default_factory=dict)
     # 실패 허용 회사(§4 현대차 등): 실패가 전체차단 비율 계산에서 제외되고 알림도 억제된다.
     failure_tolerant: bool = False
+    adapter: str = ""  # 실패가 한 소스(호스트)에 몰렸는지 판정용 (전체차단 vs 단일소스 일시실패)
 
 
 @dataclass
@@ -74,12 +75,25 @@ def aggregate(
     total = len(scored)
     bad = [r for r in scored if r.outcome in BAD_OUTCOMES]
 
-    # 전체회사 축: 다수 동시 실패/의심 → 사이트 전체 차단으로 승격, 개별 알림 억제.
+    # 전체회사 축: 다수 동시 실패/의심 → 승격, 개별 알림 억제.
+    # 단, 실패가 한 소스(어댑터/호스트)에 몰렸으면 "사이트 전체 차단"이 아니라
+    # "그 소스 일시 실패"다 → 호스트명 대고 warn (예: jobkorea가 클라우드 IP를
+    # 간헐 차단하면 19곳이 동시 실패하지만 나머지 소스는 멀쩡하다).
     if total >= FLEET_MIN_TOTAL and len(bad) / total >= FLEET_BLOCK_RATIO:
-        actions.append(_alert(
-            None, "critical",
-            f"⚠️ 전체 차단 의심: {len(bad)}/{total} 실패/의심 (개별 알림 억제)",
-        ))
+        bad_adapters = {r.adapter for r in bad if r.adapter}
+        if len(bad_adapters) == 1:
+            src = next(iter(bad_adapters))
+            actions.append(_alert(
+                None, "warn",
+                f"⚠️ '{src}' 소스 일시 실패: {len(bad)}/{total}곳 동시 실패 "
+                f"(다른 소스 정상 · 개별 알림 억제 · 다음 실행에서 자동 재시도)",
+            ))
+        else:
+            actions.append(_alert(
+                None, "critical",
+                f"⚠️ 전체 차단 의심: {len(bad)}/{total} 실패/의심 "
+                f"({len(bad_adapters) or '?'}개 소스 · 개별 알림 억제)",
+            ))
         actions += [_log(r.company_id, r.outcome, r.meta) for r in run_results]
         return actions
 

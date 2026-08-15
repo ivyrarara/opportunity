@@ -107,13 +107,27 @@ def test_adapter_exception_becomes_transport_error():
 # --- 전체 차단 승격 ------------------------------------------------------
 
 
-def test_fleet_block_single_critical_alert():
+def test_fleet_block_single_source_warns_not_critical():
+    # 한 소스(jobkorea)에만 실패가 몰리면 "전체 차단"이 아니라 그 소스 일시 실패(warn).
     adapters = {"jobkorea": lambda c, cfg, ctx: AdapterResult(Outcome.BLOCKED, {"status": 403})}
     four = ["nhn", "tossbank", "loreal", "hybe"]  # 모두 jobkorea
     summary, s = _run(adapters, only=four)
     alerts = [a for a in summary.actions if a.kind == "alert"]
     assert len(alerts) == 1
+    assert alerts[0].severity == "warn"
+    assert s["notifier"].messages[0].startswith("⚠️ 'jobkorea' 소스 일시 실패")
+    # 전 회사 로그는 남음
+    assert len(s["error_store"].entries) == 4
+
+
+def test_fleet_block_multi_source_critical():
+    # 여러 소스가 동시에 실패하면 진짜 전체 차단 의심(critical).
+    blocked = lambda c, cfg, ctx: AdapterResult(Outcome.BLOCKED, {"status": 403})  # noqa: E731
+    adapters = {"jobkorea": blocked, "workday": blocked, "lever": blocked, "greenhouse": blocked}
+    four = ["nhn", "canada_goose", "arcteryx", "figma"]  # 4개 서로 다른 어댑터
+    summary, s = _run(adapters, only=four)
+    alerts = [a for a in summary.actions if a.kind == "alert"]
+    assert len(alerts) == 1
     assert alerts[0].severity == "critical"
     assert s["notifier"].messages[0].startswith("⚠️ 전체 차단 의심")
-    # 전 회사 로그는 남음
     assert len(s["error_store"].entries) == 4

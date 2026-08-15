@@ -35,7 +35,9 @@ permissions:
 jobs:
   run:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # jobkorea가 클라우드 IP를 간헐 차단하면 19곳이 타임아웃·재시도로 ~28분까지 늘어난다.
+    # 30분 한도에 아슬아슬해 전체 실행이 죽는 것을 막기 위해 여유를 둔다(그 소스만 일시 실패).
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

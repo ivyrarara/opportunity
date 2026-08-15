@@ -82,6 +82,7 @@ def run_once(
         summary.run_results.append(RunResult(
             company.id, result.outcome, result.meta,
             failure_tolerant=company.failure_tolerant,
+            adapter=company.adapter.value,
         ))
         all_records.extend(PostingRecord.from_match(m, company.id) for m in result.matches)
 
