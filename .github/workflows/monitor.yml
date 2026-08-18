@@ -11,13 +11,21 @@
 # 최초 1회: Actions 탭에서 "Run workflow" → seed 체크 후 실행(알림 없이 현재 공고만 저장).
 # 이후 매일 자동으로 새 공고만 알림.
 #
-# cron은 UTC. 11:00 UTC ≈ 07:00 America/Toronto(EDT, 여름) / 06:00(EST, 겨울). ±1h 무해.
+# cron은 UTC. jobkorea가 클라우드 IP를 "간헐적"으로 차단하므로(어떤 시간대는 되고
+# 어떤 시간대는 안 됨), 하루 3회 서로 다른 시간대에 돌려 좋은 창을 잡는다.
+# state로 중복 제거되므로 이미 본 공고는 재알림되지 않는다(알림 폭탄 없음).
+#   03:07 UTC ≈ KST 12:07(낮)      / Toronto 23:07(전날 밤)
+#   11:07 UTC ≈ KST 20:07(저녁)    / Toronto 07:07(아침) — 기존 메인 창
+#   19:07 UTC ≈ KST 04:07(새벽)    / Toronto 15:07(오후)
+# 한 번 실행에서 jobkorea가 막힐 확률이 ~40%라 해도 3회면 다 막힐 확률 ~6% 이하.
 
 name: opportunity-monitor
 
 on:
   schedule:
-    - cron: "0 11 * * *"
+    - cron: "7 3 * * *"
+    - cron: "7 11 * * *"
+    - cron: "7 19 * * *"
   workflow_dispatch:
     inputs:
       seed:
