@@ -66,6 +66,28 @@
       "notes": "민영화 대기업. 정관장·담배 패키지/브랜드·리테일 디자인 — CPG 패키지 핏"
     },
     {
+      "id": "kt",
+      "name": "KT",
+      "adapter": "jobkorea",
+      "urls": [
+        "https://www.jobkorea.co.kr"
+      ],
+      "brand_filter": "KT",
+      "fingerprint": "JOBKOREA_M_FINGERPRINT",
+      "notes": "대기업 통신. 브랜드·비주얼·UX 인하우스"
+    },
+    {
+      "id": "bccard",
+      "name": "BC카드",
+      "adapter": "jobkorea",
+      "urls": [
+        "https://www.jobkorea.co.kr"
+      ],
+      "brand_filter": "비씨카드",
+      "fingerprint": "JOBKOREA_M_FINGERPRINT",
+      "notes": "KT 계열 금융. 카드·브랜드 디자인 — 최종면접 이력 있는 타깃"
+    },
+    {
       "id": "mercedes_benz_korea",
       "name": "메르세데스벤츠코리아",
       "adapter": "jobkorea",
