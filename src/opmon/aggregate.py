@@ -20,6 +20,10 @@ from .state import StateStore
 SUSPICIOUS_ALERT_THRESHOLD = 2   # 연속 N회 의심이면 알림 (디바운스)
 FLEET_BLOCK_RATIO = 0.5          # 이번 실행 절반 이상 이상 → 전체 차단 승격
 FLEET_MIN_TOTAL = 4              # 전체회사 축은 최소 이만큼 돌았을 때만 적용
+# 한 소스(jobkorea 등)의 일시 차단은 조용히 넘어가고(자동 재시도·중복제거로 공고 유실 없음),
+# 연속 이만큼(≈하루, 3회/일 기준) 계속 막힐 때만 "지속 차단" 경고 1회. 간헐 차단 노이즈 억제.
+FLEET_SINGLE_SOURCE_SUSTAINED = 3
+FLEET_STREAK_KEY = "__fleet__"   # 소스별 연속 차단 스트릭 상태 키 접두어(합성)
 BASELINE_WINDOW = 5              # baseline 중앙값 계산 창
 INFO_BASELINE_MIN = 3            # 평소 공고가 이 이상이던 회사가 0건이면 info
 
@@ -75,19 +79,31 @@ def aggregate(
     total = len(scored)
     bad = [r for r in scored if r.outcome in BAD_OUTCOMES]
 
+    # 소스 회복 감지: 이번 실행에서 OK가 하나라도 난 어댑터는 연속 차단 스트릭을 0으로 리셋.
+    for ad in {r.adapter for r in scored if r.outcome in OK_OUTCOMES and r.adapter}:
+        fk = FLEET_STREAK_KEY + ad
+        if state_store.get(fk).consecutive_suspicious:
+            state_store.update(fk, consecutive_suspicious=0)
+
     # 전체회사 축: 다수 동시 실패/의심 → 승격, 개별 알림 억제.
     # 단, 실패가 한 소스(어댑터/호스트)에 몰렸으면 "사이트 전체 차단"이 아니라
-    # "그 소스 일시 실패"다 → 호스트명 대고 warn (예: jobkorea가 클라우드 IP를
-    # 간헐 차단하면 19곳이 동시 실패하지만 나머지 소스는 멀쩡하다).
+    # "그 소스 일시 실패"다 (예: jobkorea가 클라우드 IP를 간헐 차단하면 다수가
+    # 동시 실패하지만 나머지 소스는 멀쩡). 이 경우는 조용히 로그만 남기고,
+    # 연속 FLEET_SINGLE_SOURCE_SUSTAINED회(≈하루) 지속될 때만 경고 1회.
     if total >= FLEET_MIN_TOTAL and len(bad) / total >= FLEET_BLOCK_RATIO:
         bad_adapters = {r.adapter for r in bad if r.adapter}
         if len(bad_adapters) == 1:
             src = next(iter(bad_adapters))
-            actions.append(_alert(
-                None, "warn",
-                f"⚠️ '{src}' 소스 일시 실패: {len(bad)}/{total}곳 동시 실패 "
-                f"(다른 소스 정상 · 개별 알림 억제 · 다음 실행에서 자동 재시도)",
-            ))
+            fk = FLEET_STREAK_KEY + src
+            streak = state_store.get(fk).consecutive_suspicious + 1
+            state_store.update(fk, consecutive_suspicious=streak)
+            # 간헐 차단(streak < 임계)은 무음. 지속 차단으로 넘어가는 순간에만 1회 경고.
+            if streak == FLEET_SINGLE_SOURCE_SUSTAINED:
+                actions.append(_alert(
+                    None, "warn",
+                    f"⚠️ '{src}' 소스 {streak}회 연속 차단(≈하루 지속): {len(bad)}/{total}곳 "
+                    f"동시 실패. 간헐 차단이 아니라 지속 차단 의심 — 소스 상태 확인 필요",
+                ))
         else:
             actions.append(_alert(
                 None, "critical",

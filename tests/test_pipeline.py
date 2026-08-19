@@ -107,17 +107,43 @@ def test_adapter_exception_becomes_transport_error():
 # --- 전체 차단 승격 ------------------------------------------------------
 
 
-def test_fleet_block_single_source_warns_not_critical():
-    # 한 소스(jobkorea)에만 실패가 몰리면 "전체 차단"이 아니라 그 소스 일시 실패(warn).
+def test_fleet_block_single_source_transient_is_silent():
+    # 한 소스(jobkorea)에만 실패가 몰린 "일시" 차단은 무음 — 자동 재시도로 유실 없으므로 알림 안 함.
     adapters = {"jobkorea": lambda c, cfg, ctx: AdapterResult(Outcome.BLOCKED, {"status": 403})}
     four = ["nhn", "tossbank", "loreal", "hybe"]  # 모두 jobkorea
     summary, s = _run(adapters, only=four)
     alerts = [a for a in summary.actions if a.kind == "alert"]
-    assert len(alerts) == 1
-    assert alerts[0].severity == "warn"
-    assert s["notifier"].messages[0].startswith("⚠️ 'jobkorea' 소스 일시 실패")
-    # 전 회사 로그는 남음
-    assert len(s["error_store"].entries) == 4
+    assert alerts == []                          # 1회 차단은 경고 없음
+    assert len(s["error_store"].entries) == 4     # 감사 로그는 남음
+
+
+def test_fleet_block_single_source_sustained_warns_once():
+    # 같은 소스가 연속 3회(≈하루) 계속 막히면 "지속 차단" 경고 1회.
+    store = _stores()
+    adapters = {"jobkorea": lambda c, cfg, ctx: AdapterResult(Outcome.BLOCKED, {"status": 403})}
+    four = ["nhn", "tossbank", "loreal", "hybe"]
+    s1, _ = _run(adapters, only=four, stores=store)
+    s2, _ = _run(adapters, only=four, stores=store)
+    s3, _ = _run(adapters, only=four, stores=store)
+    assert [a for a in s1.actions if a.kind == "alert"] == []   # 1회: 무음
+    assert [a for a in s2.actions if a.kind == "alert"] == []   # 2회: 무음
+    a3 = [a for a in s3.actions if a.kind == "alert"]           # 3회: 경고 1회
+    assert len(a3) == 1 and a3[0].severity == "warn"
+    assert store["notifier"].messages[-1].startswith("⚠️ 'jobkorea' 소스 3회 연속 차단")
+
+
+def test_fleet_block_single_source_recovery_resets_streak():
+    # 중간에 한 번이라도 정상(OK)이면 스트릭 리셋 → 다시 연속 3회 채워야 경고.
+    store = _stores()
+    blocked = {"jobkorea": lambda c, cfg, ctx: AdapterResult(Outcome.BLOCKED, {"status": 403})}
+    ok = {"jobkorea": lambda c, cfg, ctx: AdapterResult(Outcome.OK_WITH_RESULTS, {"count": 1}, [_match()])}
+    four = ["nhn", "tossbank", "loreal", "hybe"]
+    _run(blocked, only=four, stores=store)   # streak 1
+    _run(blocked, only=four, stores=store)   # streak 2
+    _run(ok, only=four, stores=store)        # 회복 → 리셋
+    s4, _ = _run(blocked, only=four, stores=store)  # streak 1 again
+    assert [a for a in s4.actions if a.kind == "alert" and a.severity == "warn"
+            and "연속 차단" in (a.text or "")] == []
 
 
 def test_fleet_block_multi_source_critical():
