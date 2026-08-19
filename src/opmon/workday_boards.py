@@ -52,24 +52,28 @@ WORKDAY_BOARDS: dict[str, dict[str, Any]] = {
         "location_contains": ["Vancouver", "British Columbia", "Canada", "Remote"],
         "max_offset": 40,
     },
-    # Samsung 미국 디자인 — SDIC(Samsung Design Innovation Center, SF) + SDA(Bay Area) +
-    # SRA(Mountain View) + SEA(NJ). 같은 글로벌 Workday(sec/Samsung_Careers), 위치만 미국.
-    # 디자인 이노베이션/미래 UX/컨셉까지 포함. 검색어는 역할+지역으로 좁혀 대형 테넌트 과다 페이지 방지.
+    # Samsung 미국 디자인 — SEA 마케팅/브랜드/그래픽 자리 중심(라승아 필드).
+    # SEA 거점: Ridgefield Park NJ(본사) · Bellevue WA(모바일) · Plano TX · Bay Area/Mountain View CA.
+    # 같은 글로벌 Workday(sec/Samsung_Careers), 위치만 미국. 대형 테넌트라 검색어를
+    # 역할+지역으로 바이어스하고(전 세계 결과에 US가 묻히는 것 방지) 위치로 하드 필터.
+    # 검색어를 브랜드/그래픽/비주얼로 재조준 — 예전 UX/design-innovation 위주는 필드 불일치라 교체.
     "samsung_us": {
         "host": "sec.wd3.myworkdayjobs.com",
         "tenant": "sec",
         "site": "Samsung_Careers",
         "locale": "en-US",
         "search_texts": [
-            "designer San Francisco", "designer California",
-            "design innovation", "UX designer United States",
+            "graphic designer United States", "brand designer United States",
+            "visual designer United States", "designer Bellevue", "designer New Jersey",
         ],
         "location_contains": [
-            "San Francisco", "California", ", CA", "Mountain View", "San Jose",
-            "Bay Area", "Sunnyvale", "New Jersey", ", NJ", "Ridgefield",
+            "Bellevue", "Washington", ", WA", "Seattle",
+            "Ridgefield", "New Jersey", ", NJ",
+            "Plano", "Texas", ", TX",
+            "San Francisco", "California", ", CA", "Mountain View", "San Jose", "Sunnyvale", "Bay Area",
             "United States", "Remote",
         ],
-        "max_offset": 40,
+        "max_offset": 60,
     },
     # BMO — 토론토 본사 은행. Workday(실측: tenant bmo / site External).
     "bmo": {
