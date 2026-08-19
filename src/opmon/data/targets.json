@@ -33,6 +33,28 @@
       "notes": "시니어는 글로벌 사이트에만 있을 수 있음"
     },
     {
+      "id": "disney_korea",
+      "name": "월트디즈니컴퍼니코리아",
+      "adapter": "jobkorea",
+      "urls": [
+        "https://www.jobkorea.co.kr"
+      ],
+      "brand_filter": "디즈니",
+      "fingerprint": "JOBKOREA_M_FINGERPRINT",
+      "notes": "외국계, 브랜드·마케팅 디자인 간헐 공고"
+    },
+    {
+      "id": "cocacola_korea",
+      "name": "한국코카콜라",
+      "adapter": "jobkorea",
+      "urls": [
+        "https://www.jobkorea.co.kr"
+      ],
+      "brand_filter": "코카콜라",
+      "fingerprint": "JOBKOREA_M_FINGERPRINT",
+      "notes": "외국계, 브랜드·패키지 디자인 간헐 공고"
+    },
+    {
       "id": "mercedes_benz_korea",
       "name": "메르세데스벤츠코리아",
       "adapter": "jobkorea",
