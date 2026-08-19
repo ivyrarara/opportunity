@@ -55,6 +55,17 @@
       "notes": "외국계, 브랜드·패키지 디자인 간헐 공고"
     },
     {
+      "id": "ktng",
+      "name": "KT&G",
+      "adapter": "jobkorea",
+      "urls": [
+        "https://www.jobkorea.co.kr"
+      ],
+      "brand_filter": "KT&G",
+      "fingerprint": "JOBKOREA_M_FINGERPRINT",
+      "notes": "민영화 대기업. 정관장·담배 패키지/브랜드·리테일 디자인 — CPG 패키지 핏"
+    },
+    {
       "id": "mercedes_benz_korea",
       "name": "메르세데스벤츠코리아",
       "adapter": "jobkorea",
