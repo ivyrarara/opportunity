@@ -75,6 +75,19 @@ def is_excluded(posting: Posting, exclude_keywords: list[str]) -> str | None:
     return None
 
 
+# 짧은 ASCII 약어는 큰 단어 속에 substring으로 오탐된다(대소문자 구분 매칭이라
+# 대문자 약어가 문제): "AI"→"AIA"(보험)·"AICC"(콜센터), "CI"→"SOCIAL"·"OFFICIAL",
+# "UI"→"GUIDE". 이들은 앞뒤가 ASCII 글자가 아닐 때만(공백·기호·한글·숫자 경계) 매칭한다.
+# 한글 인접("AI기획")은 허용, 라틴 단어 내부("AIA")는 차단.
+_BOUNDARY_KEYWORDS = frozenset({"AI", "UI", "UX", "BI", "CI", "HMI"})
+
+
+def _kw_in(kw: str, text: str) -> bool:
+    if kw in _BOUNDARY_KEYWORDS:
+        return re.search(r"(?<![A-Za-z])" + re.escape(kw) + r"(?![A-Za-z])", text) is not None
+    return kw in text
+
+
 def match_categories(text: str, cfg: TargetsConfig) -> tuple[str | None, list[str]]:
     """카테고리 키워드 매칭. (첫 매칭 카테고리, 매칭된 키워드 전체) 반환.
 
@@ -85,7 +98,7 @@ def match_categories(text: str, cfg: TargetsConfig) -> tuple[str | None, list[st
     primary: str | None = None
     for ks in cfg.keyword_sets:
         for kw in ks.keywords:
-            if kw in text:
+            if _kw_in(kw, text):
                 matched.append(kw)
                 if primary is None:
                     primary = ks.category

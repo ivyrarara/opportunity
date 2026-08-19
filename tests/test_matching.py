@@ -141,3 +141,15 @@ def test_evaluate_branding_with_highlight():
     assert r is not None
     assert r.category == "브랜딩"
     assert "영어가능" in r.highlights
+
+
+def test_short_acronym_no_substring_false_positive():
+    # 대문자 약어가 큰 단어 속에 substring 오탐되면 안 됨(실측 사례).
+    #   "AI" ⊄ "AIA"(보험)·"AICC"(콜센터)
+    assert match_categories("AIA 퍼미션센터 상담원 모집", CFG) == (None, [])
+    assert match_categories("BC카드 AICC 특수파트 환경미화 보조", CFG) == (None, [])
+    # 그러나 경계가 성립하는 정상 표기는 매칭돼야 함.
+    cat, mk = match_categories("생성형 AI 디자인", CFG)
+    assert cat == "AI" and "AI" in mk
+    cat2, mk2 = match_categories("AI기획 담당", CFG)  # 한글 인접 허용
+    assert cat2 == "AI" and "AI" in mk2
