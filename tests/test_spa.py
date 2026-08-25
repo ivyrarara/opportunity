@@ -166,7 +166,7 @@ def test_run_api_end_to_end_matches():
     def handler(request):
         page = int(dict(request.url.params).get("page", "1"))
         data = {
-            1: [{"id": 1, "title": "AI 서비스 기획자", "employ": "정규직", "career": "경력 5~10년"},
+            1: [{"id": 1, "title": "브랜딩 디자이너", "employ": "정규직", "career": "경력 5~10년"},
                 {"id": 2, "title": "재무 담당자", "employ": "정규직", "career": "경력 7년"}],
         }.get(page, [])
         return httpx.Response(200, json={"result": {"jobList": data, "total": 2}})
@@ -174,8 +174,8 @@ def test_run_api_end_to_end_matches():
     with httpx.Client(transport=httpx.MockTransport(handler)) as client:
         res = run_api(CFG.get_company("toss"), CFG, RunContext(client=client), API_SCFG)
     assert res.outcome == Outcome.OK_WITH_RESULTS
-    assert len(res.matches) == 1               # AI만 매칭, 재무는 카테고리 무매칭
-    assert res.matches[0].category == "AI"
+    assert len(res.matches) == 1               # 브랜딩만 매칭, 재무는 카테고리 무매칭
+    assert res.matches[0].category == "브랜딩"
 
 
 # --- run 디스패치 / skip ------------------------------------------------

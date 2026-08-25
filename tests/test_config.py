@@ -61,7 +61,8 @@ def test_default_targets_ids_unique():
 def test_default_targets_five_categories():
     cfg = load_targets()
     cats = {ks.category for ks in cfg.keyword_sets}
-    assert {"UX/HMI", "AI", "접근성", "브랜딩", "패키지/인쇄"} <= cats
+    assert {"UX/HMI", "접근성", "브랜딩", "패키지/인쇄", "Design(EN)"} <= cats
+    assert "AI" not in cats  # AI 카테고리는 개발직 노이즈 유발로 제거됨
 
 
 def test_default_targets_min_experience_is_five():
@@ -89,7 +90,7 @@ def test_get_company_and_missing():
 def test_all_keywords_maps_to_category():
     cfg = load_targets()
     mapping = cfg.all_keywords()
-    assert mapping.get("AI") == "AI"
+    assert mapping.get("브랜딩") == "브랜딩"
     assert mapping.get("UX") == "UX/HMI"
 
 

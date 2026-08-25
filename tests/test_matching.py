@@ -79,10 +79,16 @@ def test_not_excluded_when_only_in_dept():
 # --- 카테고리 / 하이라이트 ----------------------------------------------
 
 
-def test_match_categories_ai():
-    cat, kws = match_categories("AI 서비스 기획자", CFG)
-    assert cat == "AI"
-    assert "AI" in kws
+def test_match_categories_branding():
+    cat, kws = match_categories("브랜딩 시니어 디자이너", CFG)
+    assert cat == "브랜딩"
+    assert "브랜딩" in kws
+
+
+def test_ai_only_posting_not_matched():
+    # AI 카테고리 제거: 디자인 키워드 없는 AI/개발 공고는 더 이상 매칭 안 됨.
+    assert match_categories("AI 서비스 기획자", CFG) == (None, [])
+    assert match_categories("머신러닝 엔지니어", CFG) == (None, [])
 
 
 def test_match_categories_none():
@@ -99,11 +105,11 @@ def test_match_highlights_english():
 
 
 def test_evaluate_match_ok():
-    p = Posting(job_id="1", title="AI 서비스 기획자", url="u",
+    p = Posting(job_id="1", title="브랜딩 디자이너", url="u",
                 employment_type="정규직", experience_text="경력 5~10년")
     r = evaluate_posting(p, CFG)
     assert r is not None
-    assert r.category == "AI"
+    assert r.category == "브랜딩"
     assert r.min_experience_ok is True
 
 
@@ -145,11 +151,12 @@ def test_evaluate_branding_with_highlight():
 
 def test_short_acronym_no_substring_false_positive():
     # 대문자 약어가 큰 단어 속에 substring 오탐되면 안 됨(실측 사례).
-    #   "AI" ⊄ "AIA"(보험)·"AICC"(콜센터)
+    #   "AI" ⊄ "AIA"(보험)·"AICC"(콜센터), "UI" ⊄ "GUIDE", "CI" ⊄ "OFFICIAL"
     assert match_categories("AIA 퍼미션센터 상담원 모집", CFG) == (None, [])
     assert match_categories("BC카드 AICC 특수파트 환경미화 보조", CFG) == (None, [])
+    assert match_categories("GUIDE 라인 OFFICIAL SNS 운영", CFG) == (None, [])
     # 그러나 경계가 성립하는 정상 표기는 매칭돼야 함.
-    cat, mk = match_categories("생성형 AI 디자인", CFG)
-    assert cat == "AI" and "AI" in mk
-    cat2, mk2 = match_categories("AI기획 담당", CFG)  # 한글 인접 허용
-    assert cat2 == "AI" and "AI" in mk2
+    cat, mk = match_categories("차량 UX 리서처", CFG)
+    assert cat == "UX/HMI" and "UX" in mk
+    cat2, mk2 = match_categories("UI 디자이너", CFG)  # 경계 성립
+    assert cat2 == "UX/HMI" and "UI" in mk2

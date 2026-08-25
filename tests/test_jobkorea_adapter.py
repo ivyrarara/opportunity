@@ -34,16 +34,16 @@ def test_parse_search_fixture():
 
 
 def test_end_to_end_offline_match():
-    """fixture → 파싱 → §3 매칭. 6건 중 대상은 A(AI)·D(패키지)·F(브랜딩) 3건."""
+    """fixture → 파싱 → §3 매칭. 6건 중 대상은 A(UX/HMI)·D(패키지)·F(브랜딩) 3건."""
     body = (FIXTURES / "jobkorea_nhn_synthetic.html").read_text(encoding="utf-8")
     _, postings, _ = jobkorea.parse_search(body, NHN)
     matched = [m for p in postings if (m := evaluate_posting(p, CFG)) is not None]
     cats = sorted(m.category for m in matched)
-    assert cats == ["AI", "브랜딩", "패키지/인쇄"]
+    assert cats == ["UX/HMI", "브랜딩", "패키지/인쇄"]
 
     by_cat = {m.category: m for m in matched}
-    # AI: 경력 확인됨
-    assert by_cat["AI"].min_experience_ok is True
+    # UX/HMI: 경력 확인됨
+    assert by_cat["UX/HMI"].min_experience_ok is True
     # 패키지/인쇄: 경력 필드 없음 → 확인필요
     assert by_cat["패키지/인쇄"].min_experience_ok is None
     # 브랜딩: 영어가능 하이라이트

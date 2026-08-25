@@ -77,12 +77,12 @@ def test_extract_populates_posting_fields():
     _, postings, _ = extract_with_fingerprint(_nhn(), JOBKOREA_M_FINGERPRINT, base=BASE)
     by_id = {p.job_id: p for p in postings}
     a = by_id["45201001"]
-    assert a.title == "AI 서비스 기획자 (경력 5~10년)"
+    assert a.title == "인터랙션 디자인 리드 (경력 5~10년)"
     # 표시용 URL은 원본 유지(추적 파라미터 포함), job_id만 정규화해 안정화
     assert a.url == "https://m.jobkorea.co.kr/Recruit/GI_Read/45201001?Oem_Code=C1&logpath=1"
     assert a.employment_type == "정규직"
     assert a.experience_text == "경력 5~10년"
-    assert a.dept == "AI플랫폼실"
+    assert a.dept == "디자인센터"
 
 
 def test_extract_empty_returns_zero():
