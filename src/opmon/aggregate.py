@@ -91,24 +91,34 @@ def aggregate(
     # 동시 실패하지만 나머지 소스는 멀쩡). 이 경우는 조용히 로그만 남기고,
     # 연속 FLEET_SINGLE_SOURCE_SUSTAINED회(≈하루) 지속될 때만 경고 1회.
     if total >= FLEET_MIN_TOTAL and len(bad) / total >= FLEET_BLOCK_RATIO:
-        bad_adapters = {r.adapter for r in bad if r.adapter}
-        if len(bad_adapters) == 1:
-            src = next(iter(bad_adapters))
-            fk = FLEET_STREAK_KEY + src
+        # 실패가 한 소스(어댑터)에 '지배적으로' 몰렸으면 사이트 전체 차단이 아니라
+        # 그 소스 일시 차단이다. 지배 소스 하나가 fleet 임계를 홀로 넘으면
+        # (그 어댑터만으로 ratio 초과) 단일소스로 처리한다 — jobkorea(24곳)가 IP
+        # 차단당한 실행에 다른 어댑터의 산발 실패 1~2건이 섞였다고 critical 전체차단으로
+        # 오탐하지 않는다. 실패가 여러 어댑터에 고르게 퍼졌을 때만 전체차단으로 승격.
+        bad_by_adapter: dict[str, int] = {}
+        for r in bad:
+            if r.adapter:
+                bad_by_adapter[r.adapter] = bad_by_adapter.get(r.adapter, 0) + 1
+        dom_adapter, dom_count = (
+            max(bad_by_adapter.items(), key=lambda kv: kv[1]) if bad_by_adapter else (None, 0)
+        )
+        if dom_adapter is not None and dom_count / total >= FLEET_BLOCK_RATIO:
+            fk = FLEET_STREAK_KEY + dom_adapter
             streak = state_store.get(fk).consecutive_suspicious + 1
             state_store.update(fk, consecutive_suspicious=streak)
             # 간헐 차단(streak < 임계)은 무음. 지속 차단으로 넘어가는 순간에만 1회 경고.
             if streak == FLEET_SINGLE_SOURCE_SUSTAINED:
                 actions.append(_alert(
                     None, "warn",
-                    f"⚠️ '{src}' 소스 {streak}회 연속 차단(≈하루 지속): {len(bad)}/{total}곳 "
+                    f"⚠️ '{dom_adapter}' 소스 {streak}회 연속 차단(≈하루 지속): {dom_count}/{total}곳 "
                     f"동시 실패. 간헐 차단이 아니라 지속 차단 의심 — 소스 상태 확인 필요",
                 ))
         else:
             actions.append(_alert(
                 None, "critical",
                 f"⚠️ 전체 차단 의심: {len(bad)}/{total} 실패/의심 "
-                f"({len(bad_adapters) or '?'}개 소스 · 개별 알림 억제)",
+                f"({len(bad_by_adapter) or '?'}개 소스 · 개별 알림 억제)",
             ))
         actions += [_log(r.company_id, r.outcome, r.meta) for r in run_results]
         return actions

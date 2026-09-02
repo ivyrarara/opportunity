@@ -157,3 +157,18 @@ def test_fleet_block_multi_source_critical():
     assert alerts[0].severity == "critical"
     assert s["notifier"].messages[0].startswith("⚠️ 전체 차단 의심")
     assert len(s["error_store"].entries) == 4
+
+
+def test_fleet_block_dominant_source_with_stray_is_not_critical():
+    # jobkorea(다수)가 IP 차단당한 실행에 다른 어댑터 산발 실패 1건이 섞여도,
+    # 한 소스가 실패를 지배하면(그 어댑터만으로 fleet 임계 초과) critical 전체차단이
+    # 아니라 단일소스 일시 차단으로 처리 — 무음(실측 오탐 사례).
+    blocked = lambda c, cfg, ctx: AdapterResult(Outcome.BLOCKED, {"status": 403})  # noqa: E731
+    adapters = {"jobkorea": blocked, "workday": blocked}
+    # jobkorea 5곳 + workday 1곳 동시 실패 → 5/6이 jobkorea(지배) → 무음
+    only = ["nhn", "sk_elecklink", "loreal", "disney_korea", "cocacola_korea", "canada_goose"]
+    summary, s = _run(adapters, only=only)
+    alerts = [a for a in summary.actions if a.kind == "alert"]
+    assert alerts == []                            # critical 전체차단 오탐 없음
+    assert not any("전체 차단 의심" in m for m in s["notifier"].messages)
+    assert len(s["error_store"].entries) == 6       # 감사 로그는 전부 남음
