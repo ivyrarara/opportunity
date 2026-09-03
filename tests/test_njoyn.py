@@ -87,6 +87,20 @@ def test_no_anchor_no_marker_is_suspicious():
     assert outcome == Outcome.SUSPICIOUS_EMPTY
 
 
+def test_radware_captcha_is_challenge_not_suspicious():
+    # Njoyn은 Radware Bot Manager 뒤라 클라우드 IP서 200+캡차 페이지를 준다(실측).
+    # 이건 빈 결과(no_anchor_no_marker)가 아니라 봇차단(CHALLENGE)으로 분류돼야 한다.
+    html = (
+        "<html><body>Radware Captcha Page We apologize for the inconvenience... "
+        "your activity and behavior on this site made us think that you are a bot. "
+        "Please solve this CAPTCHA to request unblock to the website. "
+        "validate.perfdrive.com" + ("x" * 3000) + "</body></html>"
+    )
+    outcome, meta, _ = classify_and_parse(html, BASE)
+    assert outcome == Outcome.CHALLENGE
+    assert meta["reason"] == "bot_challenge"
+
+
 def test_tiny_body_no_anchor_is_blocked():
     outcome, meta, _ = classify_and_parse("<html></html>", BASE)
     assert outcome == Outcome.BLOCKED

@@ -327,7 +327,8 @@
       "adapter": "njoyn",
       "urls": [],
       "brand_filter": null,
-      "notes": "지자체(집 앞). Njoyn 목록 HTML. 디자인+접근성 제목만"
+      "failure_tolerant": true,
+      "notes": "지자체(집 앞). Njoyn 목록 HTML. 디자인+접근성 제목만. Radware 봇차단 뒤라 클라우드 IP서 캡차(CHALLENGE) 잦음 → 실패 허용(조용히)."
     },
     {
       "id": "samsung",

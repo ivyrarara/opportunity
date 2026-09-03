@@ -35,6 +35,13 @@ _EMPTY_MARKERS = (
     "no job", "no current", "no opportunit", "no matching",
     "no positions", "there are currently no", "no results",
 )
+# 봇차단/캡차 인터스티셜 — Njoyn은 Radware Bot Manager 뒤에 있어 클라우드 IP로 접속하면
+# HTTP 200으로 캡차 페이지(validate.perfdrive.com)를 돌려준다. 앵커·빈마커가 없어
+# 'no_anchor_no_marker' 구조변경으로 오분류되므로, 봇차단으로 정확히 판정한다.
+_CHALLENGE_MARKERS = (
+    "radware", "perfdrive", "botmanager", "captcha",
+    "you are a bot", "request unblock",
+)
 _MIN_BODY_BYTES = 1500
 
 
@@ -126,6 +133,10 @@ def parse_listing(body: str, base_url: str) -> list[Posting]:
 
 def classify_and_parse(body: str, base_url: str) -> tuple[Outcome, dict, list[Posting]]:
     """200 응답 본문 → (outcome, meta, 관련 Posting)."""
+    low0 = body.lower()
+    # 봇차단/캡차 인터스티셜(200으로 위장) → 빈 결과가 아니라 차단으로 판정.
+    if any(mk in low0 for mk in _CHALLENGE_MARKERS):
+        return Outcome.CHALLENGE, {"reason": "bot_challenge"}, []
     all_posts = parse_listing(body, base_url)
     relevant = [p for p in all_posts if is_design_or_access(p.title)]
     meta = {"anchors": len(all_posts), "relevant": len(relevant)}
