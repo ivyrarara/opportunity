@@ -168,6 +168,60 @@ def test_fleet_ratio_constant_is_half():
     assert FLEET_BLOCK_RATIO == 0.5
 
 
+# --- 어댑터 단위 차단 그룹핑 (전체 fleet 미만) --------------------------
+
+
+def _wd(cid):
+    # Workday 차단(200+HTML) 실측 케이스.
+    return RunResult(cid, Outcome.BLOCKED, {"reason": "expected_json_got_html"}, adapter="workday")
+
+
+def _ok(cid, adapter="jobkorea"):
+    return RunResult(cid, Outcome.OK_WITH_RESULTS, {"count": 1}, adapter=adapter)
+
+
+def test_adapter_block_cluster_is_silent_first_time():
+    # Workday 6곳 동시 차단이지만 전체(14)의 43% → fleet 미만. 어댑터 그룹핑으로 무음.
+    store = InMemoryStateStore()
+    wd = [_wd(f"wd{i}") for i in range(6)]
+    ok = [_ok(f"jk{i}") for i in range(8)]  # 다른 소스는 정상
+    actions = _run(store, *wd, *ok)
+    assert _alerts(actions) == []                       # 개별 6개 스팸 없음, 무음
+    assert sum(1 for a in _logs(actions) if a.company_id and a.company_id.startswith("wd")) == 6
+
+
+def test_adapter_block_cluster_warns_once_when_sustained():
+    store = InMemoryStateStore()
+    wd = [_wd(f"wd{i}") for i in range(6)]
+    ok = [_ok(f"jk{i}") for i in range(8)]
+    a1 = _run(store, *wd, *ok)
+    a2 = _run(store, *wd, *ok)
+    a3 = _run(store, *wd, *ok)
+    assert _alerts(a1) == [] and _alerts(a2) == []      # 1·2회: 무음
+    warns = _alerts(a3)                                  # 3회: 그룹 경고 1회
+    assert len(warns) == 1 and warns[0].severity == "warn"
+    assert "workday" in warns[0].text and "6곳" in warns[0].text
+
+
+def test_adapter_block_cluster_recovery_resets():
+    store = InMemoryStateStore()
+    wd = [_wd(f"wd{i}") for i in range(6)]
+    ok = [_ok(f"jk{i}") for i in range(8)]
+    _run(store, *wd, *ok)                                # streak 1
+    _run(store, *wd, *ok)                                # streak 2
+    _run(store, *[_ok(f"wd{i}", adapter="workday") for i in range(6)], *ok)  # workday 회복 → 리셋
+    a4 = _run(store, *wd, *ok)                           # streak 1 again → 무음
+    assert _alerts(a4) == []
+
+
+def test_two_source_blocks_still_individually_alerted():
+    # 한 어댑터에 2곳만 차단이면 그룹 임계(3) 미달 → 개별 즉시 알림 유지.
+    store = InMemoryStateStore()
+    actions = _run(store, _wd("wd0"), _wd("wd1"), *[_ok(f"jk{i}") for i in range(8)])
+    blocked_alerts = [a for a in _alerts(actions) if a.company_id in ("wd0", "wd1")]
+    assert len(blocked_alerts) == 2                      # 2곳은 개별 알림
+
+
 # --- state store --------------------------------------------------------
 
 

@@ -24,6 +24,11 @@ FLEET_MIN_TOTAL = 4              # 전체회사 축은 최소 이만큼 돌았�
 # 연속 이만큼(≈하루, 3회/일 기준) 계속 막힐 때만 "지속 차단" 경고 1회. 간헐 차단 노이즈 억제.
 FLEET_SINGLE_SOURCE_SUSTAINED = 3
 FLEET_STREAK_KEY = "__fleet__"   # 소스별 연속 차단 스트릭 상태 키 접두어(합성)
+# 전체 fleet(50%) 미만이어도 한 어댑터에서 즉시-알림 차단이 이만큼 동시 발생하면
+# 하나로 묶는다(예: Workday 6곳이 러너 IP 차단으로 동시에 expected_json_got_html).
+ADAPTER_BLOCK_GROUP_MIN = 3
+# 즉시 알림(디바운스 없음) 대상 차단 Outcome — 어댑터 그룹핑도 이들만 대상으로.
+_IMMEDIATE_BLOCK_OUTCOMES = frozenset({Outcome.BLOCKED, Outcome.RATE_LIMITED, Outcome.CHALLENGE})
 BASELINE_WINDOW = 5              # baseline 중앙값 계산 창
 INFO_BASELINE_MIN = 3            # 평소 공고가 이 이상이던 회사가 0건이면 info
 
@@ -123,8 +128,36 @@ def aggregate(
         actions += [_log(r.company_id, r.outcome, r.meta) for r in run_results]
         return actions
 
+    # 어댑터 단위 차단 클러스터(전체 fleet 미만): 한 어댑터에서 즉시-알림 차단이
+    # ADAPTER_BLOCK_GROUP_MIN곳 이상 동시 발생하면(예: Workday 6곳이 러너 IP 차단으로
+    # 동시에 expected_json_got_html) 하나로 묶는다. jobkorea와 동일하게 간헐은 무음,
+    # 연속 지속(≈하루)일 때만 1회 경고 → 개별 차단 알림 폭탄 방지.
+    grouped_ids: set[str] = set()
+    block_by_adapter: dict[str, list[RunResult]] = {}
+    for r in scored:
+        if r.adapter and r.outcome in _IMMEDIATE_BLOCK_OUTCOMES:
+            block_by_adapter.setdefault(r.adapter, []).append(r)
+    for adapter, rs in block_by_adapter.items():
+        if len(rs) < ADAPTER_BLOCK_GROUP_MIN:
+            continue  # 1~2곳 산발 차단은 개별 처리(스팸 아님)
+        fk = FLEET_STREAK_KEY + adapter
+        streak = state_store.get(fk).consecutive_suspicious + 1
+        state_store.update(fk, consecutive_suspicious=streak)
+        for r in rs:
+            actions.append(_log(r.company_id, r.outcome, r.meta))
+            grouped_ids.add(r.company_id)
+        if streak == FLEET_SINGLE_SOURCE_SUSTAINED:
+            reason = rs[0].meta.get("reason") or rs[0].outcome.value
+            actions.append(_alert(
+                None, "warn",
+                f"⚠️ '{adapter}' 소스 {streak}회 연속 차단(≈하루 지속): {len(rs)}곳 "
+                f"동시 차단({reason}). 간헐 차단이 아니라 지속 차단 의심 — 소스 상태 확인 필요",
+            ))
+
     for r in run_results:
         cid, outcome, meta = r.company_id, r.outcome, r.meta
+        if cid in grouped_ids:
+            continue  # 어댑터 그룹핑에서 이미 로그·처리됨(개별 알림 억제)
         st = state_store.get(cid)
 
         # 실패 허용 회사: 실패 Outcome은 감사 로그만 남기고 알림·카운터 조작 없음 (조용히 허용).
