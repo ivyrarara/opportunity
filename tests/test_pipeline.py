@@ -104,6 +104,45 @@ def test_adapter_exception_becomes_transport_error():
     assert "kaboom" in summary.run_results[0].meta["error"]
 
 
+# --- 회로 차단기: 어댑터 전체 다운 시 남은 타겟 즉시 스킵 -----------------
+
+_JK_IDS = [c.id for c in CFG.companies if c.adapter.value == "jobkorea"]
+
+
+def test_circuit_breaker_skips_rest_of_dead_adapter():
+    """jobkorea가 통째로 transport_error면 임계치(3) 이후 러너를 더 호출하지 않는다."""
+    calls = {"n": 0}
+
+    def dead(c, cfg, ctx):
+        calls["n"] += 1
+        return AdapterResult(Outcome.TRANSPORT_ERROR, {"boom": True})
+
+    summary, _ = _run({"jobkorea": dead})  # 비-jobkorea는 미등록 → 스킵
+    # 러너는 임계치까지만 실제 호출된다.
+    assert calls["n"] == 3
+    # 나머지 jobkorea는 회로 차단으로 스킵.
+    assert len(summary.companies_circuit_skipped) == len(_JK_IDS) - 3
+    # 그래도 전 타겟이 transport_error로 집계돼 알림 신호는 그대로 유지.
+    assert summary.outcome_counts()["transport_error"] == len(_JK_IDS)
+    circuit_meta = [r for r in summary.run_results if r.meta.get("reason") == "circuit_open"]
+    assert len(circuit_meta) == len(_JK_IDS) - 3
+
+
+def test_circuit_breaker_does_not_open_when_source_alive():
+    """성공이 주기적으로 섞여 3연속이 안 생기면 회로가 열리지 않는다."""
+    ok_ids = set(_JK_IDS[2::3])  # 매 3번째마다 성공 → 최대 2연속 실패
+
+    def flaky(c, cfg, ctx):
+        if c.id in ok_ids:
+            return AdapterResult(Outcome.OK_EMPTY_TRUSTED, {"count": 0})
+        return AdapterResult(Outcome.TRANSPORT_ERROR, {"boom": True})
+
+    summary, _ = _run({"jobkorea": flaky})
+    # 모든 jobkorea가 실제로 시도됨 — 차단 스킵 없음.
+    assert summary.companies_circuit_skipped == []
+    assert len(summary.companies_run) == len(_JK_IDS)
+
+
 # --- 전체 차단 승격 ------------------------------------------------------
 
 

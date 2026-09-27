@@ -27,10 +27,18 @@ from .state import StateStore
 from .storage.base import CrawlErrorStore, PostingStore
 
 
+# 한 어댑터가 이 실행에서 연속으로 이만큼 transport_error를 내면 '전체 다운'으로 보고
+# 같은 어댑터의 남은 타겟은 즉시 건너뛴다(회로 차단, §6). jobkorea IP 차단처럼 소스가
+# 통째로 죽었을 때 24곳×타임아웃으로 실행이 30분+ 늘어지는 낭비를 막는다.
+# 첫 N곳은 실제로 시도하므로 소스가 살아있으면 차단기는 열리지 않고, 다음 실행마다 리셋된다.
+_CIRCUIT_OPEN_THRESHOLD = 3
+
+
 @dataclass
 class RunSummary:
     companies_run: list[str] = field(default_factory=list)
     companies_skipped: list[str] = field(default_factory=list)  # 미등록 어댑터
+    companies_circuit_skipped: list[str] = field(default_factory=list)  # 회로 차단으로 건너뜀
     run_results: list[RunResult] = field(default_factory=list)
     new_postings: int = 0
     actions: list[Action] = field(default_factory=list)
@@ -59,13 +67,28 @@ def run_once(
     """전 회사 1회 실행. only가 주어지면 해당 company id만."""
     summary = RunSummary()
     all_records: list[PostingRecord] = []
+    # 어댑터별 연속 transport_error 카운트 / 회로가 열린(전체 다운 판정) 어댑터.
+    transport_streak: dict[str, int] = {}
+    open_adapters: set[str] = set()
 
     for company in cfg.companies:
         if only is not None and company.id not in only:
             continue
-        runner = adapters.get(company.adapter.value)
+        adapter_name = company.adapter.value
+        runner = adapters.get(adapter_name)
         if runner is None:
             summary.companies_skipped.append(company.id)
+            continue
+
+        # 이 어댑터의 회로가 이미 열렸으면(앞선 타겟들이 연속 실패) 호출하지 않고
+        # 즉시 같은 transport_error로 기록한다 — 타임아웃×재시도 낭비를 건너뛴다.
+        if adapter_name in open_adapters:
+            summary.companies_circuit_skipped.append(company.id)
+            summary.run_results.append(RunResult(
+                company.id, Outcome.TRANSPORT_ERROR, {"reason": "circuit_open"},
+                failure_tolerant=company.failure_tolerant,
+                adapter=adapter_name,
+            ))
             continue
 
         try:
@@ -78,11 +101,20 @@ def run_once(
             summary.companies_skipped.append(company.id)
             continue
 
+        # 회로 차단기: 연속 transport_error를 세다가 임계치에 닿으면 회로를 연다.
+        # 그 외 outcome(성공·정책성 차단 등)이 하나라도 나오면 스트릭을 리셋한다.
+        if result.outcome == Outcome.TRANSPORT_ERROR:
+            transport_streak[adapter_name] = transport_streak.get(adapter_name, 0) + 1
+            if transport_streak[adapter_name] >= _CIRCUIT_OPEN_THRESHOLD:
+                open_adapters.add(adapter_name)
+        else:
+            transport_streak[adapter_name] = 0
+
         summary.companies_run.append(company.id)
         summary.run_results.append(RunResult(
             company.id, result.outcome, result.meta,
             failure_tolerant=company.failure_tolerant,
-            adapter=company.adapter.value,
+            adapter=adapter_name,
         ))
         all_records.extend(PostingRecord.from_match(m, company.id) for m in result.matches)
 
@@ -206,7 +238,9 @@ def main(argv: list[str] | None = None) -> int:
         seed=args.seed, only=args.only,
     )
 
-    print(f"[run] 실행 {len(summary.companies_run)}곳 / 스킵(미구현 어댑터) {len(summary.companies_skipped)}곳")
+    print(f"[run] 실행 {len(summary.companies_run)}곳 / 스킵(미구현 어댑터) {len(summary.companies_skipped)}곳"
+          + (f" / 회로차단 스킵 {len(summary.companies_circuit_skipped)}곳"
+             if summary.companies_circuit_skipped else ""))
     print(f"[run] Outcome: {summary.outcome_counts()}")
     print(f"[run] 신규 공고 {summary.new_postings}건 / "
           f"공고알림 {summary.dispatch.posting_messages_sent} "
