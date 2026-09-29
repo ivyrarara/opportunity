@@ -14,6 +14,8 @@ from __future__ import annotations
 from typing import Any
 
 _NA_REMOTE = ["Toronto", "Ontario", "Canada", "Remote"]
+# 한국 복귀 대비 — 서울/한국 소재 자리만. Greenhouse location.name은 보통 "Seoul, South Korea".
+_KR_SEOUL = ["Seoul", "Korea", "Remote"]
 
 GREENHOUSE_BOARDS: dict[str, dict[str, Any]] = {
     # Figma — Greenhouse token "figma". 프로덕트/브랜드 디자인.
@@ -25,6 +27,12 @@ GREENHOUSE_BOARDS: dict[str, dict[str, Any]] = {
     "pinterest": {
         "token": "pinterest",
         "location_contains": _NA_REMOTE,
+    },
+    # Coupang — Greenhouse token "coupang". 서울/한국 비주얼·브랜드·디자인 자리
+    # (예: Senior Visual & Multimedia Designer, Seoul). jobkorea IP 차단 대체 이전(2026-09).
+    "coupang": {
+        "token": "coupang",
+        "location_contains": _KR_SEOUL,
     },
 }
 

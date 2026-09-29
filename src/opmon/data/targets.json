@@ -172,13 +172,12 @@
     {
       "id": "coupang",
       "name": "쿠팡",
-      "adapter": "jobkorea",
+      "adapter": "greenhouse",
       "urls": [
-        "https://www.jobkorea.co.kr"
+        "https://boards.greenhouse.io/coupang"
       ],
-      "brand_filter": "쿠팡",
-      "notes": "공개 API 먼저 확인 | 잡코리아 검색으로 전환",
-      "fingerprint": "JOBKOREA_M_FINGERPRINT"
+      "brand_filter": null,
+      "notes": "Greenhouse 보드(token coupang). 서울/한국 디자인·비주얼 자리. jobkorea IP 차단(2026-09) 대체 이전."
     },
     {
       "id": "kakao",
