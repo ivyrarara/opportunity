@@ -93,6 +93,37 @@ def test_transport_error_debounced():
     assert len(_alerts(a2)) == 1        # 2회: 알림
 
 
+# --- 반복 억제: 같은 실패가 계속돼도 한 번만 알림 (스팸 방지) -----------
+
+
+def test_parse_error_repeat_is_suppressed():
+    """applied_materials_korea가 매 실행 parse_error여도 알림은 첫 1회뿐."""
+    store = InMemoryStateStore()
+    a1 = _run(store, RunResult("amk", Outcome.PARSE_ERROR, {"reason": "schema"}))
+    assert len(_alerts(a1)) == 1                 # 1회째: 알림
+    for _ in range(5):                            # 이후 반복
+        ax = _run(store, RunResult("amk", Outcome.PARSE_ERROR, {"reason": "schema"}))
+        assert _alerts(ax) == []                  # 억제 (로그만)
+        assert len(_logs(ax)) == 1
+
+
+def test_blocked_repeat_is_suppressed():
+    store = InMemoryStateStore()
+    a1 = _run(store, RunResult("x", Outcome.BLOCKED, {"status": 403}))
+    assert len(_alerts(a1)) == 1
+    a2 = _run(store, RunResult("x", Outcome.BLOCKED, {"status": 403}))
+    assert _alerts(a2) == []                      # 반복 억제
+
+
+def test_alert_re_fires_after_recovery():
+    """성공으로 회복되면 카운터가 리셋돼, 다시 실패 시 알림이 재개된다."""
+    store = InMemoryStateStore()
+    assert len(_alerts(_run(store, RunResult("x", Outcome.PARSE_ERROR, {})))) == 1
+    assert _alerts(_run(store, RunResult("x", Outcome.PARSE_ERROR, {}))) == []   # 억제
+    _run(store, RunResult("x", Outcome.OK_WITH_RESULTS, {"count": 3}))           # 회복
+    assert len(_alerts(_run(store, RunResult("x", Outcome.PARSE_ERROR, {})))) == 1  # 재알림
+
+
 # --- 회복 시 카운터 리셋 -------------------------------------------------
 
 

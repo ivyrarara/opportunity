@@ -32,6 +32,20 @@ _IMMEDIATE_BLOCK_OUTCOMES = frozenset({Outcome.BLOCKED, Outcome.RATE_LIMITED, Ou
 BASELINE_WINDOW = 5              # baseline 중앙값 계산 창
 INFO_BASELINE_MIN = 3            # 평소 공고가 이 이상이던 회사가 0건이면 info
 
+# 실패 Outcome별 '처음 몇 회째'에 한 번만 알릴지. 그 뒤 같은 실패 반복은 억제하고
+# 성공(OK)이 나오면 카운터가 리셋돼 다시 처음부터다. 차단/파싱오류/챌린지는 즉시(1회),
+# 전송오류·렌더타임아웃·정체불명은 일시적 블립을 걸러내려 2회째에 알린다.
+# (예전엔 PARSE_ERROR·차단이 매 실행 알림을 쏴 한 회사가 하루 3번씩 같은 알림을 스팸했다.)
+_FIRST_ALERT_AT = {
+    Outcome.PARSE_ERROR: 1,
+    Outcome.BLOCKED: 1,
+    Outcome.RATE_LIMITED: 1,
+    Outcome.CHALLENGE: 1,
+    Outcome.TRANSPORT_ERROR: SUSPICIOUS_ALERT_THRESHOLD,
+    Outcome.RENDER_TIMEOUT: SUSPICIOUS_ALERT_THRESHOLD,
+    Outcome.SUSPICIOUS_EMPTY: SUSPICIOUS_ALERT_THRESHOLD,
+}
+
 
 @dataclass
 class RunResult:
@@ -63,6 +77,20 @@ def _log(company_id: str | None, outcome: Outcome | None, meta: dict[str, Any] |
 
 def _alert(company_id: str | None, severity: str, text: str, outcome: Outcome | None = None) -> Action:
     return Action(kind="alert", company_id=company_id, severity=severity, text=text, outcome=outcome)
+
+
+def _failure_text(cid: str, outcome: Outcome, meta: dict[str, Any] | None, n: int) -> str:
+    """실패 Outcome별 알림 본문."""
+    meta = meta or {}
+    if outcome == Outcome.SUSPICIOUS_EMPTY:
+        return f"⚠️ {cid}: {n}회 연속 정체불명 0건 ({meta.get('reason')}). 셀렉터/구조 확인 필요"
+    if outcome in (Outcome.BLOCKED, Outcome.RATE_LIMITED, Outcome.CHALLENGE):
+        return f"⚠️ {cid} 차단({outcome.value}): {meta.get('status', '')} {meta.get('reason', '')}".strip()
+    # TRANSPORT_ERROR / PARSE_ERROR / RENDER_TIMEOUT
+    detail = str(meta.get("error") or meta.get("reason") or "")[:120]
+    if not detail and ("declared" in meta or "parsed" in meta):
+        detail = f"declared={meta.get('declared')} parsed={meta.get('parsed')}"
+    return f"⚠️ {cid} {outcome.value}: {detail}".rstrip()
 
 
 def roll_median(recent: list[int], new_count: int, window: int = BASELINE_WINDOW) -> tuple[int, list[int]]:
@@ -187,29 +215,17 @@ def aggregate(
             n = st.consecutive_suspicious + 1
             state_store.update(cid, consecutive_suspicious=n)
             actions.append(_log(cid, outcome, meta))
-            if n >= SUSPICIOUS_ALERT_THRESHOLD:
-                actions.append(_alert(
-                    cid, "warn",
-                    f"⚠️ {cid}: {n}회 연속 정체불명 0건 ({meta.get('reason')}). 셀렉터/구조 확인 필요",
-                    outcome,
-                ))
+            if n == SUSPICIOUS_ALERT_THRESHOLD:
+                actions.append(_alert(cid, "warn", _failure_text(cid, outcome, meta, n), outcome))
 
-        elif outcome in (Outcome.BLOCKED, Outcome.RATE_LIMITED, Outcome.CHALLENGE):
-            # 즉시 알림 (디바운스 없음)
-            actions.append(_log(cid, outcome, meta))
-            actions.append(_alert(
-                cid, "warn",
-                f"⚠️ {cid} 차단({outcome.value}): {meta.get('status', '')} {meta.get('reason', '')}".strip(),
-                outcome,
-            ))
-
-        else:  # TRANSPORT_ERROR, PARSE_ERROR, RENDER_TIMEOUT
-            actions.append(_log(cid, outcome, meta))
+        else:  # BLOCKED / RATE_LIMITED / CHALLENGE / TRANSPORT_ERROR / PARSE_ERROR / RENDER_TIMEOUT
             n = st.consecutive_suspicious + 1
             state_store.update(cid, consecutive_suspicious=n)
-            # PARSE_ERROR는 즉시, 나머지는 연속 2회부터 (§5-5)
-            if outcome == Outcome.PARSE_ERROR or n >= SUSPICIOUS_ALERT_THRESHOLD:
-                detail = str(meta.get("error", meta.get("reason", "")))[:120]
-                actions.append(_alert(cid, "warn", f"⚠️ {cid} {outcome.value}: {detail}", outcome))
+            actions.append(_log(cid, outcome, meta))
+            # 실패는 '처음 N회째'에 딱 한 번만 알린다 — 그 뒤 같은 실패가 계속돼도 억제하고
+            # (감사 로그는 매번 남음), 성공이 나오면 카운터가 리셋돼 다시 알림이 가능해진다.
+            # (개별 회사가 매 실행 PARSE_ERROR/차단으로 하루 3번씩 스팸하던 것을 막는다.)
+            if n == _FIRST_ALERT_AT.get(outcome, SUSPICIOUS_ALERT_THRESHOLD):
+                actions.append(_alert(cid, "warn", _failure_text(cid, outcome, meta, n), outcome))
 
     return actions
